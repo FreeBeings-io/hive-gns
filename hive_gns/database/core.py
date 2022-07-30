@@ -12,6 +12,7 @@ class DbSession:
             database=config['db_name'],
             user=config['db_username'],
             password=config['db_password'],
+            application_name="gns",
             connect_timeout=3,
             keepalives=1,
             keepalives_idle=5,
