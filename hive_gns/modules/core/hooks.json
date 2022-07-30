@@ -1,4 +1,15 @@
 {
-    "core_transfer": [2, "gns.core_transfer", "trn", {}],
-    "gns": [18, "gns.core_gns", "gns", {"id":"gns"}]
+    "enabled": true,
+    "core_transfer": {
+        "op_id": 2,
+        "function": "gns.core_transfer",
+        "notif_code": "trn",
+        "filter": {}
+    },
+    "gns": {
+        "op_id": 18,
+        "function": "gns.core_gns",
+        "notif_code": "gns",
+        "filter": {"id": "gns"}
+    }
 }
