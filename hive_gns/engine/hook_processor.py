@@ -33,21 +33,27 @@ class HookProcessor:
             pass
 
     def _get_notif_details(self):
+        """
+            Loads the notification hook into memory and saves to DB.
+            ```
+                notif_code -> op_type_id / func / filter
+            ```
+        """
         notifs = {}
-        type_ids = []
-        for h in self.hooks:
-            data = self.hooks[h]
+        for hook_name in self.hooks:
+            data = self.hooks[hook_name]
             op_type_id = data[0]
-            notifs[op_type_id] = {
-                'name': h,
-                'func': data[1],
-                'code': data[2]
-            }
-            if op_type_id not in type_ids:
-                type_ids.append(op_type_id)
-        notifs['ids'] = type_ids
+            func = data[1]
+            notif_code = data[2]
+            h_filter = data[3].split('=') if op_type_id == 18 else None
+            if notif_code not in notifs:
+                notifs[notif_code] = {
+                    'op_type_id': op_type_id,
+                    'func': func,
+                    'filter': h_filter
+                }
         self.notifs = notifs
-        self.type_ids = type_ids
+        # update DB entry
         has = select(f"SELECT module FROM gns.module_state WHERE module='{self.module}'", ['module'], True)
         hooks = json.dumps(self.notifs)
         if has is not None:
@@ -65,20 +71,12 @@ class HookProcessor:
         if done is not True:
             raise Exception(f"Failed to save hooks to DB for module: '{self.module}")
 
-    
-    def _get_notif_code(self, op_type_id):
-        notif_name = self.notifs[op_type_id]['code']
-        return notif_name
-    
-    def _get_notif_func(self, op_type_id):
-        notif_func = self.notifs[op_type_id]['func']
-        return notif_func
-    
     def _main_loop(self):
         while True:
             head_gns_op_id = GnsStatus.get_global_latest_gns_op_id()
             cur_gns_op_id = GnsStatus.get_module_latest_gns_op_id(self.module)
             if head_gns_op_id - cur_gns_op_id > 0:
+                system_status.set_module_status(self.module, 'synchronizing...')
                 try:
                     done = perform('gns.update_module', [self.module, cur_gns_op_id+1, head_gns_op_id])
                     if not done:

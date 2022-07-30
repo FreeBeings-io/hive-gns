@@ -3,6 +3,7 @@ import decimal
 import os
 import re
 
+GLOBAL_START_BLOCK = 64251317
 INSTALL_DIR = os.path.dirname(__file__)
 UTC_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 HIVE_NODES = [

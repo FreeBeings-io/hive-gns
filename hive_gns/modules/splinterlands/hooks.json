@@ -1,3 +1,9 @@
 {
-    "sm_token_transfer": [18, "gns.sm_token_transfer", "trn"]
+    "enabled": true,
+    "sm_token_transfer": {
+        "op_id": 18,
+        "function": "gns.sm_token_transfer",
+        "notif_code": "trn",
+        "filter": {"id":"sm_token_transfer"}
+    }
 }

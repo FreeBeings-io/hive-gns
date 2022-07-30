@@ -22,8 +22,8 @@ Study the default `/hive_gns/modules/core/hooks.json` to learn how to format you
 
 ```
 {
-    "core_transfer": [2, "gns.core_transfer", "trn"],
-    "gns": [18, "gns.core_gns", "prf"]
+    "core_transfer": [2, "gns.core_transfer", "trn", {}],
+    "gns": [18, "gns.core_gns", "gns", {"id":"gns"}]
 }
 ```
 
@@ -33,6 +33,7 @@ Study the default `/hive_gns/modules/core/hooks.json` to learn how to format you
     - the corresponding HAF operation ID for the notification handler
     - name of the SQL function that handles the body of the operation
     - a 3 character code for the notification handler
+    - a JSON object to define a `filter`
 
 `[ hive_op_id <int>, sql_function <str>, notif_code <str(3)> ]`
 

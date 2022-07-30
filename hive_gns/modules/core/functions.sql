@@ -20,6 +20,8 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id CHAR(40
             _nai := (_body->'value'->>'amount')::json->>'nai';
             _memo := _body->'value'->>'memo';
 
+            -- TODO: user prefs filtering
+
             IF _nai = '@@000000013' THEN
                 _currency := 'HBD';
                 _amount := ((_body->'value'->>'amount')::json->>'amount')::float / 1000;
@@ -32,7 +34,7 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id CHAR(40
             END IF;
 
             -- check if subscribed
-            _sub := gns.account_check_notif(_to, 'core', _notif_code);
+            _sub := gns.check_user_filter(_to, 'core', _notif_code);
 
             IF _sub = true THEN
 
@@ -44,8 +46,8 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id CHAR(40
                 WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _to);
 
                 -- make notification entry
-                INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified)
-                VALUES (_gns_op_id, _trx_id, _to, 'core', _notif_code, _created, _remark, _body, true);
+                INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, created, remark, payload, verified)
+                VALUES (_gns_op_id, _trx_id, _to, 'core', _created, _remark, _body, true);
             END IF;
 
         END;

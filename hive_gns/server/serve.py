@@ -38,10 +38,12 @@ async def root():
     cur_time = datetime.strptime(report['timestamp'], UTC_TIMESTAMP_FORMAT)
     sys_time = datetime.strptime(report['system']['block_time'], UTC_TIMESTAMP_FORMAT)
     diff = cur_time - sys_time
+    health = "GOOD"
     if diff.seconds > 30:
         health = "BAD"
-    else:
-        health = "GOOD"
+    for mod in report['system']['modules']:
+        if report['system']['modules'][mod] != 'synchronized':
+            health = "BAD"
     report['health'] = health
     return report
 

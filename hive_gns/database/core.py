@@ -12,13 +12,14 @@ class DbSession:
             database=config['db_name'],
             user=config['db_username'],
             password=config['db_password'],
+            application_name="gns",
             connect_timeout=3,
             keepalives=1,
             keepalives_idle=5,
             keepalives_interval=2,
             keepalives_count=2
         )
-        self.conn.autocommit = False
+        self.conn.autocommit = True
 
     def select(self, sql):
         cur = self.conn.cursor()
@@ -37,6 +38,27 @@ class DbSession:
         else:
             return res
 
+    def select_one(self, sql):
+        cur = self.conn.cursor()
+        try:
+            cur.execute(sql)
+            res = cur.fetchone()
+            cur.close()
+        except Exception as e:
+            print(e)
+            print(f"SQL:  {sql}")
+            self.conn.rollback()
+            cur.close()
+            raise Exception ('DB error occurred')
+        if len(res) == 0:
+            return None
+        else:
+            return res[0]
+    
+    def select_exists(self, sql):
+        res = self.select_one(f"SELECT EXISTS ({sql});")
+        return res
+
     def execute(self, sql,  data=None):
         cur = self.conn.cursor()
         try:
@@ -51,10 +73,13 @@ class DbSession:
             print(f"DATA:   {data}")
             self.conn.rollback()
             cur.close()
-            raise Exception ('DB error occurred')
+            raise Exception({'data': data, 'sql': sql})
 
     def commit(self):
         self.conn.commit()
+    
+    def is_open(self):
+        return self.conn.closed == 0
 
 
 class DbSetup:

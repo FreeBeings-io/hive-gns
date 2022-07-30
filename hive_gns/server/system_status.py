@@ -25,11 +25,11 @@ def get_module_list():
     res = [k for (k,v) in modules]
     return res
 
-
 def get_sys_status():
     global sync
     cur = GnsStatus.get_global_latest_state()
     for sync_key,map_key in STATUS_MAPPING:
         sync[sync_key] = cur[map_key]
+    sync['modules'] = modules
     return sync
 
