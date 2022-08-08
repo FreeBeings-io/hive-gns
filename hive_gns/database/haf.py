@@ -4,6 +4,7 @@ import os
 import re
 from threading import Thread
 import time
+from hive_gns.config import Config
 from hive_gns.database.core import DbSession
 from hive_gns.database.modules import AvailableModules, Module
 
@@ -12,6 +13,8 @@ from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
 
 MAIN_CONTEXT = "gns"
+
+config = Config.config
 
 
 class Haf:
@@ -108,6 +111,9 @@ class Haf:
 
     @classmethod
     def _init_gns(cls):
+        if config['reset'] == 'true':
+            cls.db.execute(f"SELECT hive.app_remove_context('{MAIN_CONTEXT}');")
+            cls.db.execute(f"DROP SCHEMA {MAIN_CONTEXT} CASCADE;")
         cls._check_context(MAIN_CONTEXT)
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
@@ -135,6 +141,6 @@ class Haf:
         cls._init_modules()
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head()[0]
-        #cls.db.execute(f"CALL gns.load_state({GLOBAL_START_BLOCK}, {end_block});")
+        cls.db.execute(f"CALL gns.load_state({GLOBAL_START_BLOCK}, {end_block});")
         Thread(target=AvailableModules.module_watch).start()
-        #Thread(target=cls._init_pruner).start()
+        Thread(target=cls._init_pruner).start()
