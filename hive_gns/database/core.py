@@ -30,9 +30,11 @@ class DbSession:
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
-            self.conn.rollback()
-            cur.close()
-            raise Exception ('DB error occurred')
+            try:
+                self.conn.rollback()
+                cur.close()
+            except:
+                raise Exception ('DB error occurred')
         if len(res) == 0:
             return None
         else:
