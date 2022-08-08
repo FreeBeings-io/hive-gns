@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS gns.ops(
 
 CREATE TABLE IF NOT EXISTS gns.module_state(
     module VARCHAR(64) PRIMARY KEY,
-    latest_gns_op_id BIGINT REFERENCES gns.ops(id),
+    latest_gns_op_id BIGINT,
     latest_block_num BIGINT DEFAULT 0,
     latest_block_time TIMESTAMP,
     check_in TIMESTAMP,
