@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS gns.accounts(
 CREATE TABLE IF NOT EXISTS gns.account_notifs(
     id BIGSERIAL PRIMARY KEY,
     gns_op_id BIGINT NOT NULL UNIQUE REFERENCES gns.ops(id) ON DELETE CASCADE DEFERRABLE,
-    trx_id CHAR(40),
+    trx_id BYTEA,
     account VARCHAR(16) NOT NULL REFERENCES gns.accounts(account) ON DELETE CASCADE DEFERRABLE,
     module_name VARCHAR(64) NOT NULL,
     notif_code VARCHAR(3) NOT NULL,
