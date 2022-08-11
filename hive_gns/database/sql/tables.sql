@@ -1,6 +1,3 @@
-
-CREATE SCHEMA IF NOT EXISTS gns;
-
 CREATE TABLE IF NOT EXISTS gns.global_props(
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
