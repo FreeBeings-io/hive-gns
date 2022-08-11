@@ -113,7 +113,7 @@ class Haf:
     def _init_gns(cls):
         if config['reset'] == 'true':
             cls.db.execute(f"SELECT hive.app_remove_context('{MAIN_CONTEXT}');")
-            cls.db.execute(f"DROP SCHEMA {MAIN_CONTEXT} CASCADE;")
+            cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
         cls._check_context(MAIN_CONTEXT)
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
