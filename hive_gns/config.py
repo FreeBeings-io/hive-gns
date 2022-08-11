@@ -15,6 +15,7 @@ class Config:
         cls.config['db_password'] = os.environ.get('DB_PASSWORD')
         cls.config['server_host'] = os.environ.get('SERVER_HOST')
         cls.config['server_port'] = os.environ.get('SERVER_PORT')
+        cls.config['main_schema'] = os.environ.get('MAIN_SCHEMA')
         cls.config['reset'] = os.environ.get('RESET')
 
 Config.load_config()
