@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
+from hive_gns.config import Config
 from hive_gns.database.access import select
 from hive_gns.server.fields import Fields
 from hive_gns.tools import NAI_MAP, is_valid_hive_account
@@ -7,6 +8,7 @@ from hive_gns.tools import NAI_MAP, is_valid_hive_account
 MODULE_NAME = 'core'
 NOTIF_NAME = 'core_transfer'
 
+config = Config.config
 router_core_transfers = APIRouter()
 
 def _get_transfers(acc, limit, currency=None, sender=None, min_amount=None, max_amount=None, min_date=None, max_date=None, op_data=False):
@@ -25,7 +27,7 @@ def _get_transfers(acc, limit, currency=None, sender=None, min_amount=None, max_
             SELECT COALESCE(last_reads->'{MODULE_NAME}'->>'{NOTIF_NAME}'::timestamp, NOW() - INTERVAL '30 DAYS')
             FROM gns.accounts WHERE account = '{acc}'
         )
-    """
+    """.replace("gns.", f"{config['main_schema']}.")
     if currency:
         nai = NAI_MAP[currency]
         sql += f"AND payload->'value'->'amount'->>'nai' = '{nai}' "
