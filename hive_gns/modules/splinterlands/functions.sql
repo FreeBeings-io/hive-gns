@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id CHAR(40), _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
