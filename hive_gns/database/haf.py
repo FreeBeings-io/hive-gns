@@ -102,7 +102,7 @@ class Haf:
         working_dir = f'{INSTALL_DIR}/modules'
         cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
         for module in cls.module_list:
-            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read()).replace("gns.", f"{config['main_schema']}.")
+            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}."))
             functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
             cls._check_context(module)
             cls._check_hooks(module, hooks)
@@ -112,8 +112,12 @@ class Haf:
     @classmethod
     def _init_gns(cls):
         if config['reset'] == 'true':
-            cls.db.execute(f"SELECT hive.app_remove_context('{MAIN_CONTEXT}');")
-            cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
+            try:
+                cls.db.execute(f"SELECT hive.app_remove_context('{MAIN_CONTEXT}');")
+                cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
+            except Exception as e:
+                print(f"Reset encountered error: {e}")
+        cls.db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
         cls._check_context(MAIN_CONTEXT)
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
@@ -125,15 +129,8 @@ class Haf:
             cls.db.commit()
     
     @classmethod
-    def _init_pruner(cls):
-        while True:
-            ready = cls.db.select_one(f"SELECT state_preloaded FROM {config['main_schema']}.global_props;")
-            if ready is True:
-                break
-            time.sleep(60)
-        while True:
-            cls.db.execute(f"SELECT {config['main_schema']}.run_pruner();")
-            time.sleep(30)
+    def _init_main_sync(cls):
+        cls.db.execute(f"CALL {config['main_schema']}.sync_main();")
 
     @classmethod
     def init(cls):
@@ -143,4 +140,5 @@ class Haf:
         end_block = cls._get_haf_sync_head()[0]
         cls.db.execute(f"CALL {config['main_schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
         Thread(target=AvailableModules.module_watch).start()
-        Thread(target=cls._init_pruner).start()
+        Thread(target=cls._init_main_sync).start()
+        #Thread(target=cls._init_pruner).start()
