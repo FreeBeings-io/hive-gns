@@ -34,16 +34,13 @@ CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.run_pruner()
+CREATE OR REPLACE FUNCTION gns.prune()
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
         BEGIN
-            WHILE gns.global_sync_enabled() LOOP
-                DELETE FROM gns.ops
-                WHERE created <= NOW() - INTERVAL '30 DAYS';
-                SELECT pg_sleep(600);
-            END LOOP;
+            DELETE FROM gns.ops
+            WHERE created <= NOW() - INTERVAL '30 DAYS';
         END;
     $function$;
 

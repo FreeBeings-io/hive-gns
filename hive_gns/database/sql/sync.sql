@@ -37,6 +37,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                     RAISE NOTICE 'Attempting to process block range: <%,%>', _next_block_range.first_block, _next_block_range.last_block;
                     CALL gns.process_block_range(_app_context, _next_block_range.first_block, _next_block_range.last_block);
                 END IF;
+                PERFORM gns.prune();
             END LOOP;
             COMMIT;
         END;
@@ -130,54 +131,56 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
             _end BIGINT;
         BEGIN
             _step := 1000;
-            SELECT COALESCE(MAX(id), 0) INTO _end FROM gns.ops;
-            SELECT COALESCE(MAX(latest_gns_op_id), 0) INTO _start FROM gns.module_state WHERE module = _module_name;
-            SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
-            -- divide range
-            FOR _first_op IN _start .. _end BY _step LOOP
-                _last_op := _first_op + _step - 1;
+            WHILE gns.module_enabled() LOOP
+                SELECT COALESCE(MAX(id), 0) INTO _end FROM gns.ops;
+                SELECT COALESCE(MAX(latest_gns_op_id), 0) INTO _start FROM gns.module_state WHERE module = _module_name;
+                SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
+                -- divide range
+                FOR _first_op IN _start .. _end BY _step LOOP
+                    _last_op := _first_op + _step - 1;
 
-                IF _last_op > _end THEN --- in case the _step is larger than range length
-                    _last_op := _end;
-                END IF;
+                    IF _last_op > _end THEN --- in case the _step is larger than range length
+                        _last_op := _end;
+                    END IF;
 
-                RAISE NOTICE 'Attempting to process an op range: <%, %>', _first_op, _last_op;
-                -- record run start
-                    -- select records and pass records to relevant functions
-                FOR temprow IN
-                    SELECT
-                        id,
-                        op_type_id,
-                        block_num,
-                        created,
-                        transaction_id,
-                        body::json
-                    FROM gns.ops
-                    WHERE id >= _first_op
-                        AND id <= _last_op
-                        AND op_type_id = ANY (_op_ids)
-                    ORDER BY id
-                LOOP
-                    FOR tempnotif IN 
-                        SELECT DISTINCT ON (funct) * FROM gns.module_hooks
-                        WHERE module = _module_name
-                        AND op_id = temprow.op_type_id
+                    RAISE NOTICE 'Attempting to process an op range: <%, %>', _first_op, _last_op;
+                    -- record run start
+                        -- select records and pass records to relevant functions
+                    FOR temprow IN
+                        SELECT
+                            id,
+                            op_type_id,
+                            block_num,
+                            created,
+                            transaction_id,
+                            body::json
+                        FROM gns.ops
+                        WHERE id >= _first_op
+                            AND id <= _last_op
+                            AND op_type_id = ANY (_op_ids)
+                        ORDER BY id
                     LOOP
-                        IF gns.check_op_filter(temprow.body, tempnotif.filter) THEN
-                            EXECUTE FORMAT('SELECT %s ()', tempnotif.funct)
-                                USING temprow.id, temprow.trx_hash, temprow.timestamp, temprow.body, tempnotif.notif_code;
-                        END IF;
+                        FOR tempnotif IN 
+                            SELECT DISTINCT ON (funct) * FROM gns.module_hooks
+                            WHERE module = _module_name
+                            AND op_id = temprow.op_type_id
+                        LOOP
+                            IF gns.check_op_filter(temprow.body, tempnotif.filter) THEN
+                                EXECUTE FORMAT('SELECT %s ()', tempnotif.funct)
+                                    USING temprow.id, temprow.trx_hash, temprow.timestamp, temprow.body, tempnotif.notif_code;
+                            END IF;
+                        END LOOP;
+                        _last_block_time := temprow.created;
+                        _last_block := temprow.block_num;
                     END LOOP;
-                    _last_block_time := temprow.created;
-                    _last_block := temprow.block_num;
+                    -- save done as run end
+                    RAISE NOTICE 'Op range: <%, %> processed successfully.', _first_op, _last_op;
+                    UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
+                    UPDATE gns.module_state SET latest_gns_op_id = _last_op WHERE module = _module_name;
+                    UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
+                    UPDATE gns.module_state SET latest_block_time = _last_block_time WHERE module = _module_name;
+                    COMMIT;
                 END LOOP;
-                -- save done as run end
-                RAISE NOTICE 'Op range: <%, %> processed successfully.', _first_op, _last_op;
-                UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_gns_op_id = _last_op WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_block_time = _last_block_time WHERE module = _module_name;
-                COMMIT;
             END LOOP;
         END;
     $$;
