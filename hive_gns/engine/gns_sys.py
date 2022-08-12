@@ -1,12 +1,15 @@
 from hive_gns.config import Config
 from hive_gns.database.access import select, write
 
-GNS_OPS_FIELDS = ['gns_op_id', 'op_type_id', 'created', 'transaction_id', 'body']
+GNS_OPS_FIELDS = ['gns_op_id', 'op_type_id', 'block_num', 'created', 'transaction_id', 'body']
 GNS_GLOBAL_PROPS_FIELDS = [
-    'latest_block_num', 'latest_hive_rowid', 'latest_gns_op_id',
-    'latest_block_time', 'sync_enabled'
+    'latest_block_num', 'latest_gns_op_id', 'check_in',
+    'latest_block_time', 'sync_enabled', 'state_preloaded'
 ]
-GNS_MODULE_STATE_FIELDS = ['module', 'latest_gns_op_id']
+GNS_MODULE_STATE_FIELDS = [
+    'latest_gns_op_id', 'latest_block_num',
+    'latest_block_time', 'check_in', 'enabled'
+]
 
 config = Config.config
 
@@ -43,6 +46,17 @@ class GnsStatus:
     def get_global_latest_gns_op_id(cls):
         state = cls.get_global_latest_state()
         return state['latest_gns_op_id']
+    
+    @classmethod
+    def get_module_list(cls):
+        _res = []
+        sql = f"""
+            SELECT module FROM gns.module_state;
+        """.replace("gns.", f"{config['main_schema']}.")
+        res = select(sql, ['module'])
+        for entry in res:
+            _res.append(entry['module'])
+        return _res
 
     @classmethod
     def get_module_latest_state(cls, module):
