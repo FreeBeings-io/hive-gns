@@ -1,3 +1,4 @@
+from hive_gns.config import Config
 from hive_gns.database.access import select, write
 
 GNS_OPS_FIELDS = ['gns_op_id', 'op_type_id', 'created', 'transaction_id', 'body']
@@ -7,6 +8,7 @@ GNS_GLOBAL_PROPS_FIELDS = [
 ]
 GNS_MODULE_STATE_FIELDS = ['module', 'latest_gns_op_id']
 
+config = Config.config
 
 class GnsOps:
 
@@ -21,7 +23,7 @@ class GnsOps:
                 AND gns_op_id >= {lower}
                 AND gns_op_id <= {upper}
             ORDER BY gns_op_id ASC;
-        """
+        """.replace("gns.", f"{config['main_schema']}.")
         res = select(sql, GNS_OPS_FIELDS)
         return res
 
@@ -32,7 +34,7 @@ class GnsStatus:
         fields = ", ".join(GNS_GLOBAL_PROPS_FIELDS)
         sql = f"""
             SELECT {fields} FROM gns.global_props;
-        """
+        """.replace("gns.", f"{config['main_schema']}.")
         res = select(sql, GNS_GLOBAL_PROPS_FIELDS)
         return res[0]
 
@@ -48,7 +50,7 @@ class GnsStatus:
         sql = f"""
             SELECT {fields} FROM gns.module_state
             WHERE module = '{module}';
-        """
+        """.replace("gns.", f"{config['main_schema']}.")
         res = select(sql, GNS_MODULE_STATE_FIELDS)
         return res[0]
 
@@ -63,7 +65,7 @@ class GnsStatus:
             UPDATE gns.module_state
             SET latest_gns_op_id = {latest_gns_op_id}
             WHERE module = '{module}';
-        """
+        """.replace("gns.", f"{config['main_schema']}.")
         done = write(sql)
         if done == False:
             print(f"Failed to update state for '{module}' module. {latest_gns_op_id}")  #TODO: send to logging module

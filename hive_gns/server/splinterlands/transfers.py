@@ -25,7 +25,7 @@ def _get_transfers(acc, limit, token=None, sender=None, min_amount=None, max_amo
             SELECT COALESCE(last_reads->'{MODULE_NAME}'->>'{NOTIF_NAME}'::timestamp, NOW() - INTERVAL '30 DAYS')
             WHERE account = '{acc}'
         )
-    """
+    """.replace("gns.", f"{config['main_schema']}.")
     if token:
         sql += f"AND payload->'value'->>'json')::json->>'token' = '{token}' "
     if sender:
