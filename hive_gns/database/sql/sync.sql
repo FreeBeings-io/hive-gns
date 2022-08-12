@@ -1,11 +1,10 @@
 -- check context
 
-CREATE OR REPLACE PROCEDURE gns.sync_main()
+CREATE OR REPLACE PROCEDURE gns.sync_main(_app_context VARCHAR)
     LANGUAGE plpgsql
     AS $$
         DECLARE
             temprow RECORD;
-            _app_context VARCHAR;
             _ops VARCHAR[];
             _op_ids SMALLINT[];
             _next_block_range hive.blocks_range;
@@ -14,7 +13,6 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _latest_block_num INTEGER;
             _range BIGINT[];
         BEGIN
-            _app_context := 'gns';
             _head_haf_block_num := gns.get_haf_head_block();
             _start_block_num := _head_haf_block_num - 864000; -- 30 days blocks
 
@@ -55,6 +53,8 @@ CREATE OR REPLACE PROCEDURE gns.process_block_range(_app_context VARCHAR, _start
             _massive BOOLEAN;
             _first_block INTEGER;
             _last_block INTEGER;
+            _last_processed_block INTEGER;
+            _last_processed_block_time TIMESTAMP;
             _step INTEGER;
             _notifs VARCHAR[];
             _new_id INTEGER;
@@ -101,10 +101,12 @@ CREATE OR REPLACE PROCEDURE gns.process_block_range(_app_context VARCHAR, _start
                     VALUES (
                         temprow.op_type_id, temprow.block_num,
                         temprow.timestamp, temprow.trx_hash, temprow.body);
+                    _last_processed_block := temprow.block_num;
+                    _last_processed_block_time := temprow.timestamp;
                 END LOOP;
                 -- save done as run end
                 RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
-                UPDATE gns.global_props SET check_in = NOW();
+                UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_processed_block, latest_block_time = _last_processed_block_time;
                 COMMIT;
             END LOOP;
             IF _massive = true THEN
@@ -177,6 +179,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
                     RAISE NOTICE 'Op range: <%, %> processed successfully.', _first_op, _last_op;
                     UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
                     UPDATE gns.module_state SET latest_gns_op_id = _last_op WHERE module = _module_name;
+                    UPDATE gns.global_props SET latest_gns_op_id = _last_op;
                     UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
                     UPDATE gns.module_state SET latest_block_time = _last_block_time WHERE module = _module_name;
                     COMMIT;
