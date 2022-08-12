@@ -1,4 +1,7 @@
 CREATE TABLE IF NOT EXISTS gns.global_props(
+    latest_block_num INTEGER,
+    latest_block_time TIMESTAMP,
+    latest_gns_op_id BIGINT,
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
     sync_enabled BOOLEAN DEFAULT true
