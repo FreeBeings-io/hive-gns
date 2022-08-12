@@ -6,7 +6,7 @@ from hive_gns.server.fields import Fields
 from hive_gns.tools import NAI_MAP, is_valid_hive_account
 
 MODULE_NAME = 'core'
-NOTIF_NAME = 'core_transfer'
+NOTIF_CODE = 'trn'
 
 config = Config.config
 router_core_transfers = APIRouter()
@@ -22,9 +22,12 @@ def _get_transfers(acc, limit, currency=None, sender=None, min_amount=None, max_
         FROM gns.account_notifs
         WHERE account = '{acc}'
         AND module_name = '{MODULE_NAME}'
-        AND notif_name = '{NOTIF_NAME}'
+        AND notif_code = '{NOTIF_CODE}'
         AND created > (
-            SELECT COALESCE(last_reads->'{MODULE_NAME}'->>'{NOTIF_NAME}'::timestamp, NOW() - INTERVAL '30 DAYS')
+            SELECT COALESCE(
+                (last_reads->'{MODULE_NAME}'->>'{NOTIF_CODE}')::timestamp,
+                NOW() - INTERVAL '30 DAYS'
+            )
             FROM gns.accounts WHERE account = '{acc}'
         )
     """.replace("gns.", f"{config['main_schema']}.")
