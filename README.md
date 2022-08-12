@@ -16,6 +16,25 @@ GNS is a global notification system for dApps on the Hive Blockchain. It utilize
 
 ---
 
+## Production Deployment
+
+Simply build from the Dockerfile and run the container with the following variables passed:
+
+```
+DB_HOST=127.0.0.1
+DB_NAME=haf_block_log
+DB_USERNAME=postgres
+DB_PASSWORD=password
+SERVER_HOST=127.0.0.3
+PORT=8080
+MAIN_SCHEMA=gns_dev
+RESET=false
+```
+
+To reset the database, set the `RESET` variable to true.
+
+---
+
 ## Documentation
 
 - [GNS Broadcast Ops](/docs/broadcast_ops.md)
