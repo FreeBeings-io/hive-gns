@@ -3,8 +3,8 @@ from fastapi import APIRouter, HTTPException
 
 from hive_gns.config import Config
 from hive_gns.database.access import select
+from hive_gns.engine.gns_sys import GnsStatus
 from hive_gns.server.fields import Fields
-from hive_gns.server.system_status import get_module_list
 from hive_gns.tools import is_valid_hive_account
 
 config = Config.config
@@ -56,7 +56,7 @@ def _get_preferences(account, module=None):
 
 @router_core_accounts.get("/api/{account}/preferences", tags=['accounts'])
 def account_preferences(account:str, module:str = None):
-    if module and module not in get_module_list():
+    if module and module not in GnsStatus.get_module_list():
         raise HTTPException(status_code=400, detail="the module is not valid or is unavailable at the moment")
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
