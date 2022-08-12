@@ -104,7 +104,6 @@ class Haf:
         for module in cls.module_list:
             hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}."))
             functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
-            cls._check_context(module)
             cls._check_hooks(module, hooks)
             cls._update_functions(functions)
             AvailableModules.add_module(module, Module(module, hooks))
@@ -113,15 +112,15 @@ class Haf:
     def _init_gns(cls):
         if config['reset'] == 'true':
             try:
-                cls.db.execute(f"SELECT hive.app_remove_context('{MAIN_CONTEXT}');")
+                cls.db.execute(f"SELECT hive.app_remove_context('{config['main_schema']}');")
                 cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
             except Exception as e:
                 print(f"Reset encountered error: {e}")
         cls.db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
-        cls._check_context(MAIN_CONTEXT)
+        cls._check_context(config['main_schema'])
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
-            cls.db.execute(_sql)
+            cls.db.execute(_sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
         cls.db.commit()
         has_globs = cls.db.select(f"SELECT * FROM {config['main_schema']}.global_props;")
         if not has_globs:
@@ -130,7 +129,10 @@ class Haf:
     
     @classmethod
     def _init_main_sync(cls):
-        cls.db.execute(f"CALL {config['main_schema']}.sync_main();")
+        sql = f"""
+            CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
+        """
+        cls.db.execute(sql)
 
     @classmethod
     def init(cls):
