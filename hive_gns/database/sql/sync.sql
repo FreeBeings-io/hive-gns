@@ -1,21 +1,27 @@
 -- check context
 
-CREATE OR REPLACE PROCEDURE gns.sync_main(_module_name VARCHAR(64))
+CREATE OR REPLACE PROCEDURE gns.sync_main(_app_context VARCHAR)
     LANGUAGE plpgsql
     AS $$
         DECLARE
             temprow RECORD;
-            _app_context VARCHAR;
             _ops VARCHAR[];
             _op_ids SMALLINT[];
             _next_block_range hive.blocks_range;
+            _head_haf_block_num INTEGER;
+            _start_block_num INTEGER;
             _latest_block_num INTEGER;
             _range BIGINT[];
         BEGIN
-            _app_context := 'gns';
+            _head_haf_block_num := gns.get_haf_head_block();
+            _start_block_num := _head_haf_block_num - 864000; -- 30 days blocks
 
-            SELECT COALESCE(MAX(block_num),0) INTO _latest_block_num FROM gns.ops;
-            
+            SELECT COALESCE(MAX(block_num),_start_block_num) INTO _latest_block_num FROM gns.ops;
+
+            IF _latest_block_num = _start_block_num THEN
+                PERFORM hive.app_context_detach(_app_context);
+                PERFORM hive.app_context_attach(_app_context, _latest_block_num);
+            END IF;
 
             IF NOT hive.app_context_is_attached(_app_context) THEN
                 PERFORM hive.app_context_attach(_app_context, _latest_block_num);
@@ -27,8 +33,9 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_module_name VARCHAR(64))
                     RAISE WARNING 'Waiting for next block...';
                 ELSE
                     RAISE NOTICE 'Attempting to process block range: <%,%>', _next_block_range.first_block, _next_block_range.last_block;
-                    CALL gns.process_block_range(_module_name, _app_context, _next_block_range.first_block, _next_block_range.last_block, _ops, _op_ids);
+                    CALL gns.process_block_range(_app_context, _next_block_range.first_block, _next_block_range.last_block);
                 END IF;
+                PERFORM gns.prune();
             END LOOP;
             COMMIT;
         END;
@@ -46,6 +53,8 @@ CREATE OR REPLACE PROCEDURE gns.process_block_range(_app_context VARCHAR, _start
             _massive BOOLEAN;
             _first_block INTEGER;
             _last_block INTEGER;
+            _last_processed_block INTEGER;
+            _last_processed_block_time TIMESTAMP;
             _step INTEGER;
             _notifs VARCHAR[];
             _new_id INTEGER;
@@ -88,14 +97,16 @@ CREATE OR REPLACE PROCEDURE gns.process_block_range(_app_context VARCHAR, _start
                     USING _first_block, _last_block
                 LOOP
                     INSERT INTO gns.ops(
-                        hive_opid, op_type_id, block_num, created, transaction_id, body)
+                        op_type_id, block_num, created, transaction_id, body)
                     VALUES (
-                        temprow.hive_opid, temprow.op_type_id, temprow.block_num,
+                        temprow.op_type_id, temprow.block_num,
                         temprow.timestamp, temprow.trx_hash, temprow.body);
+                    _last_processed_block := temprow.block_num;
+                    _last_processed_block_time := temprow.timestamp;
                 END LOOP;
                 -- save done as run end
                 RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
-                UPDATE gns.global_props SET check_in = NOW();
+                UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_processed_block, latest_block_time = _last_processed_block_time;
                 COMMIT;
             END LOOP;
             IF _massive = true THEN
@@ -116,27 +127,28 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
             _step INTEGER;
             _first_op INTEGER;
             _last_op INTEGER;
+            _last_block INTEGER;
             _op_ids SMALLINT[];
             _start BIGINT;
             _end BIGINT;
         BEGIN
             _step := 1000;
-            SELECT COALCESCE(MAX(id), 0) INTO _end FROM gns.ops;
-            SELECT COALESCE(MAX(latest_gns_op_id), 0) INTO _start FROM gns.module_state WHERE module = _module_name;
-            SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
-            -- divide range
-            FOR _first_op IN _start .. _end BY _step LOOP
-                _last_op := _first_op + _step - 1;
+            WHILE gns.module_enabled(_module_name) LOOP
+                SELECT COALESCE(MAX(id), 0) INTO _end FROM gns.ops;
+                SELECT COALESCE(MAX(latest_gns_op_id), 0) INTO _start FROM gns.module_state WHERE module = _module_name;
+                SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
+                -- divide range
+                FOR _first_op IN _start .. _end BY _step LOOP
+                    _last_op := _first_op + _step - 1;
 
-                IF _last_op > _end THEN --- in case the _step is larger than range length
-                    _last_op := _end;
-                END IF;
+                    IF _last_op > _end THEN --- in case the _step is larger than range length
+                        _last_op := _end;
+                    END IF;
 
-                RAISE NOTICE 'Attempting to process an op range: <%, %>', _first_op, _last_op;
-                -- record run start
-                    -- select records and pass records to relevant functions
-                FOR temprow IN
-                    EXECUTE FORMAT('
+                    RAISE NOTICE 'Attempting to process an op range: <%, %>', _first_op, _last_op;
+                    -- record run start
+                        -- select records and pass records to relevant functions
+                    FOR temprow IN
                         SELECT
                             id,
                             op_type_id,
@@ -145,31 +157,33 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
                             transaction_id,
                             body::json
                         FROM gns.ops
-                        WHERE id >= $1
-                            AND id <= $2
-                            AND op_type_id IN $3
-                        ORDER BY id;')
-                    USING _first_op, _last_op, _op_ids
-                LOOP
-                    FOR tempnotif IN 
-                        SELECT DISTINCT ON (funct) * FROM gns.module_hooks
-                        WHERE module = _module_name
-                        AND op_id = temprow.op_type_id
+                        WHERE id >= _first_op
+                            AND id <= _last_op
+                            AND op_type_id = ANY (_op_ids)
+                        ORDER BY id
                     LOOP
-                        IF gns.check_op_filter(temprow.body, tempnotif.filter) THEN
-                            EXECUTE FORMAT('SELECT %s ()', tempnotif.funct)
-                                USING temprow.id, temprow.trx_hash, temprow.timestamp, temprow.body, tempnotif.notif_code;
-                        END IF;
+                        FOR tempnotif IN 
+                            SELECT DISTINCT ON (funct) * FROM gns.module_hooks
+                            WHERE module = _module_name
+                            AND op_id = temprow.op_type_id
+                        LOOP
+                            IF gns.check_op_filter(temprow.op_type_id, temprow.body, tempnotif.notif_filter) THEN
+                                EXECUTE FORMAT('SELECT %s ($1,$2,$3,$4,$5)', tempnotif.funct)
+                                    USING temprow.id, temprow.transaction_id, temprow.created, temprow.body, tempnotif.notif_code;
+                            END IF;
+                        END LOOP;
+                        _last_block_time := temprow.created;
+                        _last_block := temprow.block_num;
                     END LOOP;
-                    _last_block_time := temprow.created;
+                    -- save done as run end
+                    RAISE NOTICE 'Op range: <%, %> processed successfully.', _first_op, _last_op;
+                    UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
+                    UPDATE gns.module_state SET latest_gns_op_id = _last_op WHERE module = _module_name;
+                    UPDATE gns.global_props SET latest_gns_op_id = _last_op;
+                    UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
+                    UPDATE gns.module_state SET latest_block_time = _last_block_time WHERE module = _module_name;
+                    COMMIT;
                 END LOOP;
-                -- save done as run end
-                RAISE NOTICE 'Op range: <%, %> processed successfully.', _first_op, _last_op;
-                UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_gns_op_id = _last_op WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_block_time = _last_block_time WHERE module = _module_name;
-                COMMIT;
             END LOOP;
         END;
     $$;

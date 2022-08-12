@@ -13,7 +13,7 @@ class DbSession:
             user=config['db_username'],
             password=config['db_password'],
             application_name="gns",
-            connect_timeout=3,
+            connect_timeout=10,
             keepalives=1,
             keepalives_idle=5,
             keepalives_interval=2,
@@ -30,9 +30,11 @@ class DbSession:
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
-            self.conn.rollback()
-            cur.close()
-            raise Exception ('DB error occurred')
+            try:
+                self.conn.rollback()
+                cur.close()
+            except:
+                raise Exception ('DB error occurred')
         if len(res) == 0:
             return None
         else:

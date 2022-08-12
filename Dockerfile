@@ -1,10 +1,11 @@
-ARG PORT
 ARG DB_HOST
 ARG DB_NAME
 ARG DB_USERNAME
 ARG DB_PASSWORD
 ARG SERVER_HOST
-ARG SERVER_PORT
+ARG PORT=8080
+ARG MAIN_SCHEMA=gns
+ARG RESET=false
 
 FROM python:3.10
 
@@ -16,6 +17,6 @@ WORKDIR $APP_HOME
 COPY . ./
 
 # Install production dependencies.
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir -e .
 
-CMD hive_gns
+CMD python3 hive_gns/run_hive_gns.py

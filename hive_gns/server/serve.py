@@ -42,7 +42,7 @@ async def root():
     if diff.seconds > 30:
         health = "BAD"
     for mod in report['system']['modules']:
-        if report['system']['modules'][mod] != 'synchronized':
+        if report['system']['modules'][mod]['latest_gns_op_id'] < int(report['system']['gns_op_id'] * 0.99):
             health = "BAD"
     report['health'] = health
     return report

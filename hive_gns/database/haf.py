@@ -4,6 +4,7 @@ import os
 import re
 from threading import Thread
 import time
+from hive_gns.config import Config
 from hive_gns.database.core import DbSession
 from hive_gns.database.modules import AvailableModules, Module
 
@@ -12,6 +13,8 @@ from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
 
 MAIN_CONTEXT = "gns"
+
+config = Config.config
 
 
 class Haf:
@@ -52,17 +55,17 @@ class Haf:
     @classmethod
     def _check_hooks(cls, module, hooks):
         enabled = hooks['enabled']
-        has_entry = cls.db.select_exists(f"SELECT module FROM gns.module_state WHERE module='{module}'")
+        has_entry = cls.db.select_exists(f"SELECT module FROM {config['main_schema']}.module_state WHERE module='{module}'")
         if has_entry is False:
             cls.db.execute(
                 f"""
-                    INSERT INTO gns.module_state (module, enabled)
+                    INSERT INTO {config['main_schema']}.module_state (module, enabled)
                     VALUES ('{module}', '{enabled}');
                 """)
         else:
             cls.db.execute(
                 f"""
-                    UPDATE gns.module_state SET enabled = '{enabled}'
+                    UPDATE {config['main_schema']}.module_state SET enabled = '{enabled}'
                     WHERE module = '{module}';
                 """)
         del hooks['enabled']
@@ -74,21 +77,21 @@ class Haf:
             _filter = json.dumps(hooks[notif_name]['filter'])
             has_hooks_entry = cls.db.select_exists(
                 f"""
-                    SELECT module FROM gns.module_hooks 
+                    SELECT module FROM {config['main_schema']}.module_hooks 
                     WHERE module='{module}' AND notif_name = '{notif_name}'
                 """
             )
             if has_hooks_entry is False:
                 cls.db.execute(
                     f"""
-                        INSERT INTO gns.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
+                        INSERT INTO {config['main_schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
                         VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}');
                     """
                 )
             else:
                 cls.db.execute(
                     f"""
-                        UPDATE gns.module_hooks 
+                        UPDATE {config['main_schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
                             funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}';
                     """
@@ -99,35 +102,37 @@ class Haf:
         working_dir = f'{INSTALL_DIR}/modules'
         cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
         for module in cls.module_list:
-            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read())
-            functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read()
-            cls._check_context(module)
+            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}."))
+            functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
             cls._check_hooks(module, hooks)
             cls._update_functions(functions)
             AvailableModules.add_module(module, Module(module, hooks))
 
     @classmethod
     def _init_gns(cls):
-        cls._check_context(MAIN_CONTEXT)
+        if config['reset'] == 'true':
+            try:
+                cls.db.execute(f"SELECT hive.app_remove_context('{config['main_schema']}');")
+                cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
+            except Exception as e:
+                print(f"Reset encountered error: {e}")
+        cls.db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
+        cls._check_context(config['main_schema'])
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
-            _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
-            cls.db.execute(_sql)
+            _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
+            cls.db.execute(_sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
         cls.db.commit()
-        has_globs = cls.db.select("SELECT * FROM gns.global_props;")
+        has_globs = cls.db.select(f"SELECT * FROM {config['main_schema']}.global_props;")
         if not has_globs:
-            cls.db.execute("INSERT INTO gns.global_props (check_in) VALUES (NULL);")
+            cls.db.execute(f"INSERT INTO {config['main_schema']}.global_props (check_in) VALUES (NULL);")
             cls.db.commit()
     
     @classmethod
-    def _init_pruner(cls):
-        while True:
-            ready = cls.db.select_one("SELECT state_preloaded FROM gns.global_props;")
-            if ready is True:
-                break
-            time.sleep(60)
-        while True:
-            cls.db.execute("CALL gns.run_pruner();")
-            time.sleep(30)
+    def _init_main_sync(cls):
+        sql = f"""
+            CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
+        """
+        cls.db.execute(sql)
 
     @classmethod
     def init(cls):
@@ -135,6 +140,7 @@ class Haf:
         cls._init_modules()
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head()[0]
-        #cls.db.execute(f"CALL gns.load_state({GLOBAL_START_BLOCK}, {end_block});")
+        cls.db.execute(f"CALL {config['main_schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
         Thread(target=AvailableModules.module_watch).start()
+        Thread(target=cls._init_main_sync).start()
         #Thread(target=cls._init_pruner).start()
