@@ -7,7 +7,7 @@ assert sys.version_info[0] == 3 and sys.version_info[1] >= 6, "Global Notificati
 
 setup(
     name='hive_gns',
-    version='0.1.0',
+    version='2.0.0',
     description='Global notification system for dApps on the Hive Blockchain.',
     long_description=open('README.md', 'r', encoding='UTF-8').read(),
     packages=find_packages(exclude=['scripts']),
