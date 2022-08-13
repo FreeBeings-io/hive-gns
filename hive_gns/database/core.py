@@ -1,5 +1,6 @@
 import os
 import psycopg2
+from psycopg2 import DatabaseError
 
 from hive_gns.config import Config
 
@@ -7,6 +8,9 @@ config = Config.config
 
 class DbSession:
     def __init__(self):
+        self.new_conn()
+
+    def new_conn(self):
         self.conn = psycopg2.connect(
             host=config['db_host'],
             database=config['db_name'],
@@ -27,6 +31,8 @@ class DbSession:
             cur.execute(sql)
             res = cur.fetchall()
             cur.close()
+        except DatabaseError:
+            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
@@ -46,16 +52,18 @@ class DbSession:
             cur.execute(sql)
             res = cur.fetchone()
             cur.close()
+            if len(res) == 0:
+                return None
+            else:
+                return res[0]
+        except DatabaseError:
+            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
             self.conn.rollback()
             cur.close()
             raise Exception ('DB error occurred')
-        if len(res) == 0:
-            return None
-        else:
-            return res[0]
     
     def select_exists(self, sql):
         res = self.select_one(f"SELECT EXISTS ({sql});")
@@ -69,6 +77,8 @@ class DbSession:
             else:
                 cur.execute(sql)
             cur.close()
+        except DatabaseError:
+            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
