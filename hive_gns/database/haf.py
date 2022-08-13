@@ -111,11 +111,14 @@ class Haf:
     @classmethod
     def _init_gns(cls):
         if config['reset'] == 'true':
-            try:
-                cls.db.execute(f"SELECT hive.app_remove_context('{config['main_schema']}');")
-                cls.db.execute(f"DROP SCHEMA {config['main_schema']} CASCADE;")
-            except Exception as e:
-                print(f"Reset encountered error: {e}")
+            resets = []
+            resets.append(f"SELECT hive.app_remove_context('{config['main_schema']}');")
+            resets.append(f"DROP SCHEMA {config['main_schema']} CASCADE;")
+            for sql in resets:
+                try:
+                    cls.db.execute(sql)
+                except Exception as e:
+                    print(f"Reset encountered error: {e}")
         cls.db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
         cls._check_context(config['main_schema'])
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
