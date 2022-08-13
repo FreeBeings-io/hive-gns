@@ -31,6 +31,10 @@ class DbSession:
             cur.execute(sql)
             res = cur.fetchall()
             cur.close()
+            if len(res) == 0:
+                return None
+            else:
+                return res
         except DatabaseError:
             self.new_conn()
         except Exception as e:
@@ -41,10 +45,6 @@ class DbSession:
                 cur.close()
             except:
                 raise Exception ('DB error occurred')
-        if len(res) == 0:
-            return None
-        else:
-            return res
 
     def select_one(self, sql):
         cur = self.conn.cursor()
