@@ -1,5 +1,5 @@
 from hive_gns.external.splinterlands import Splinterlands
-from hive_gns.database.access import select, write
+from hive_gns.database.access import db
 
 class ExternalVerifications:
 
@@ -9,7 +9,7 @@ class ExternalVerifications:
             SELECT id, trx_id FROM gns.account_notifs
             WHERE verified IS NULL;
         """
-        notifications = select(sql_notifs, ['id', 'trx_id']) or []
+        notifications = db.select(sql_notifs, ['id', 'trx_id']) or []
         sql = ""
         for notif in notifications:
             trx_id = notif['trx_id']
@@ -21,4 +21,4 @@ class ExternalVerifications:
                     WHERE id = '{_id}';
                 """
         if sql != "":
-            write(sql)
+            db.write(sql)

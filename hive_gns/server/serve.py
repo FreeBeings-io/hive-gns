@@ -55,5 +55,5 @@ def run_server():
         port=int(config['server_port']),
         log_level="info",
         reload=False,
-        workers=10
+        workers=1
     )

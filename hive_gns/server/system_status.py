@@ -25,4 +25,3 @@ def get_sys_status():
         sync[sync_key] = cur[map_key]
     sync['modules'] = get_module_status()
     return sync
-
