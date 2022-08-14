@@ -1,4 +1,5 @@
 import sys
+import time
 
 
 from hive_gns.config import Config
@@ -12,6 +13,7 @@ def run():
         """Runs main application processes and server."""
         print("---   Global Notification System (Hive Blockchain) started   ---")
         Haf.init()
+        time.sleep(20)
         run_server()
     except KeyboardInterrupt:
         sys.exit()

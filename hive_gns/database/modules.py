@@ -87,6 +87,7 @@ class AvailableModules:
 
     @classmethod
     def module_watch(cls):
+        print("Starting module watch...")
         while True:
             for _module in cls.modules.items():
                 module = cls.modules[_module[0]]

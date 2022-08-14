@@ -132,10 +132,12 @@ class Haf:
     
     @classmethod
     def _init_main_sync(cls):
+        print("Starting main sync process...")
         sql = f"""
             CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
         """
         cls.db.execute(sql)
+        print("Main sync started successfully.")
 
     @classmethod
     def init(cls):
