@@ -11,9 +11,9 @@ DESCRIPTION = """
 VERSION = "1.0"
 
 CONTACT = {
-    "name": "imwatsi",
-    "url": "https://hive.blog/@imwatsi",
-    "email": "imwatsi@outlook.com",
+    "name": "FreeBeings.io",
+    "url": "https://freebeings.io",
+    "email": "info@freebeings.io",
 }
 
 LICENSE = {
