@@ -17,11 +17,7 @@ class DbSession:
             user=config['db_username'],
             password=config['db_password'],
             application_name="gns",
-            connect_timeout=10,
-            keepalives=1,
-            keepalives_idle=5,
-            keepalives_interval=2,
-            keepalives_count=2
+            connect_timeout=0
         )
         self.conn.autocommit = True
 
