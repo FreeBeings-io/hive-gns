@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException
 
 from hive_gns.config import Config
-from hive_gns.database.access import select
+from hive_gns.database.access import db
 from hive_gns.engine.gns_sys import GnsStatus
 from hive_gns.server.fields import Fields
 from hive_gns.tools import is_valid_hive_account
@@ -23,7 +23,7 @@ def _get_all_notifs(acc, limit, op_data=False):
     """.replace("gns.", f"{config['main_schema']}.")
     if limit:
         sql += f"LIMIT {limit}"
-    res = select(sql, fields)
+    res = db.select(sql, fields)
     return res
 
 def _get_unread_count(acc):
@@ -36,7 +36,7 @@ def _get_unread_count(acc):
             FROM gns.accounts WHERE account = '{acc}'
         );
     """.replace("gns.", f"{config['main_schema']}.")
-    res = select(sql, ['count'], True)
+    res = db.select(sql, ['count'], True)
     return res['count']
 
 def _get_preferences(account, module=None):
@@ -46,7 +46,7 @@ def _get_preferences(account, module=None):
         SELECT {_fields} FROM gns.accounts
         WHERE account = '{account}';
     """.replace("gns.", f"{config['main_schema']}.")
-    res = select(sql, fields, True)
+    res = db.select(sql, fields, True)
     if module and module in res['prefs']:
         return {
             'prefs': res['prefs'][module],

@@ -10,16 +10,11 @@ config = Config.config
 
 class Module:
 
-    def __init__(self, name, hooks) -> None:
+    def __init__(self, db, name, hooks) -> None:
         self.name = name
         self.hooks = hooks
-        self.db_conn = DbSession()
+        self.db_conn = DbSession(name)
         self.error = False
-    
-    def create_new_connection(self):
-        if self.error == False:
-            del self.db_conn
-            self.db_conn = DbSession()
 
     def get_hooks(self):
         return self.hooks
@@ -51,9 +46,6 @@ class Module:
             )
         )
         return enabled
-
-    def is_connection_open(self):
-        return self.db_conn.is_open()
     
     def running(self):
         running = self.db_conn.select_one(
@@ -75,7 +67,6 @@ class Module:
             print(err)
             self.error = True
             self.disable()
-            self.db_conn.conn.close()
 
 class AvailableModules:
 
@@ -92,10 +83,6 @@ class AvailableModules:
             for _module in cls.modules.items():
                 module = cls.modules[_module[0]]
                 if not module.error:
-                    good = module.is_connection_open()
-                    if good is False:
-                        print(f"{_module[0]}:: creating new DB connection.")
-                        module.create_new_connection()
                     if module.running() is False:
                         Thread(target=module.start).start()
                     elif module.is_long_running():

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
 from hive_gns.config import Config
-from hive_gns.database.access import select
+from hive_gns.database.access import db
 from hive_gns.server.fields import Fields
 from hive_gns.tools import NAI_MAP, is_valid_hive_account
 
@@ -45,7 +45,7 @@ def _get_transfers(acc, limit, currency=None, sender=None, min_amount=None, max_
     if max_date:
         sql += f"AND created <= '{max_date}'"
     sql += f"ORDER BY created DESC LIMIT {limit}"
-    res = select(sql, fields)
+    res = db.select(sql, fields)
     return res
 
 @router_core_transfers.get("/api/{account}/core/transfers", tags=['core'])

@@ -7,19 +7,28 @@ from hive_gns.config import Config
 config = Config.config
 
 class DbSession:
-    def __init__(self):
-        self.new_conn()
 
-    def new_conn(self):
-        self.conn = psycopg2.connect(
-            host=config['db_host'],
-            database=config['db_name'],
-            user=config['db_username'],
-            password=config['db_password'],
-            application_name="gns",
-            connect_timeout=0
-        )
-        self.conn.autocommit = True
+    def __init__(self, pref):
+        self.new_conn(pref)
+
+    def new_conn(self, pref):
+        try:
+            self.conn = psycopg2.connect(
+                host=config['db_host'],
+                database=config['db_name'],
+                user=config['db_username'],
+                password=config['db_password'],
+                application_name=config['main_schema'] + '-' + pref,
+                connect_timeout=0
+            )
+            self.conn.autocommit = True
+        except psycopg2.OperationalError as e:
+            if config['db_name'] in e.args[0] and "does not exist" in e.args[0]:
+                print(f"No database found. Please create a '{config['db_name']}' database in PostgreSQL.")
+                os._exit(1)
+            else:
+                print(e)
+                os._exit(1)
 
     def select(self, sql):
         cur = self.conn.cursor()
@@ -31,8 +40,6 @@ class DbSession:
                 return None
             else:
                 return res
-        except DatabaseError:
-            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
@@ -52,8 +59,6 @@ class DbSession:
                 return None
             else:
                 return res[0]
-        except DatabaseError:
-            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
@@ -73,8 +78,6 @@ class DbSession:
             else:
                 cur.execute(sql)
             cur.close()
-        except DatabaseError:
-            self.new_conn()
         except Exception as e:
             print(e)
             print(f"SQL:  {sql}")
@@ -85,31 +88,6 @@ class DbSession:
 
     def commit(self):
         self.conn.commit()
-    
+
     def is_open(self):
         return self.conn.closed == 0
-
-
-class DbSetup:
-
-    @classmethod
-    def check_db(cls):
-        try:
-            cls.conn = psycopg2.connect(
-            host=config['db_host'],
-            database=config['db_name'],
-            user=config['db_username'],
-            password=config['db_password'],
-            connect_timeout=3,
-            keepalives=1,
-            keepalives_idle=5,
-            keepalives_interval=2,
-            keepalives_count=2
-        )
-        except psycopg2.OperationalError as e:
-            if config['db_name'] in e.args[0] and "does not exist" in e.args[0]:
-                print(f"No database found. Please create a '{config['db_name']}' database in PostgreSQL.")
-                os._exit(1)
-            else:
-                print(e)
-                os._exit(1)
