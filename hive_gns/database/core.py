@@ -19,7 +19,7 @@ class DbSession:
                 user=config['db_username'],
                 password=config['db_password'],
                 application_name=config['main_schema'] + '-' + pref,
-                connect_timeout=0
+                connect_timeout=20
             )
             self.conn.autocommit = True
         except psycopg2.OperationalError as e:

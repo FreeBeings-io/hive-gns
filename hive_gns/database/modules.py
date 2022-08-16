@@ -36,7 +36,7 @@ class Module:
     
     def terminate_sync(self):
         self.db_conn.execute(
-            f"SELECT {config['main_schema']}.terminate_sync({self.name});"
+            f"SELECT {config['main_schema']}.module_terminate_sync({self.name});"
         )
     
     def is_enabled(self):

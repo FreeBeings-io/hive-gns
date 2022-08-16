@@ -82,7 +82,7 @@ CREATE OR REPLACE FUNCTION gns.module_long_running( _module VARCHAR)
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.terminate_sync( _module VARCHAR)
+CREATE OR REPLACE FUNCTION gns.module_terminate_sync( _module VARCHAR)
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
