@@ -35,9 +35,9 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_app_context VARCHAR)
                     RAISE NOTICE 'Attempting to process block range: <%,%>', _next_block_range.first_block, _next_block_range.last_block;
                     CALL gns.process_block_range(_app_context, _next_block_range.first_block, _next_block_range.last_block);
                 END IF;
-                PERFORM gns.prune();
+                -- PERFORM gns.prune();
+                COMMIT;
             END LOOP;
-            COMMIT;
         END;
     $$;
 
