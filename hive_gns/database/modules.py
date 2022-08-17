@@ -23,37 +23,37 @@ class Module:
         # TODO: rewrite
         self.hooks['enabled'] = False
         _defs = json.dumps(self.hooks)
-        self.db_conn.execute(
+        self.db_conn.do('execute',
             f"UPDATE {config['main_schema']}.module_state SET enabled = false WHERE module = '{self.name}';"
         )
-        self.db_conn.commit()
+        self.db_conn.do('commit')
     
     def enable(self):
-        self.db_conn.execute(
+        self.db_conn.do('execute',
             f"UPDATE {config['main_schema']}.module_state SET enabled = false WHERE module = '{self.name}';"
         )
-        self.db_conn.commit()
+        self.db_conn.do('commit')
     
     def terminate_sync(self):
-        self.db_conn.execute(
+        self.db_conn.do('execute',
             f"SELECT {config['main_schema']}.module_terminate_sync({self.name});"
         )
     
     def is_enabled(self):
         enabled = bool(
-            self.db_conn.select_one(
+            self.db_conn.do('select_one',
                 f"SELECT enabled FROM {config['main_schema']}.module_state WHERE module ='{self.name}';"
             )
         )
         return enabled
     
     def running(self):
-        running = self.db_conn.select_one(
+        running = self.db_conn.do('select_one',
             f"SELECT {config['main_schema']}.module_running('{self.name}');")
         return running
     
     def is_long_running(self):
-        long_running = self.db_conn.select_one(
+        long_running = self.db_conn.do('select_one',
             f"SELECT {config['main_schema']}.module_long_running('{self.name}');")
         return long_running
     
@@ -61,7 +61,7 @@ class Module:
         try:
             if self.is_enabled():
                 print(f"{self.name}:: starting")
-                self.db_conn.execute(f"CALL {config['main_schema']}.sync_module( '{self.name}' );")
+                self.db_conn.do('execute', f"CALL {config['main_schema']}.sync_module( '{self.name}' );")
         except Exception as err:
             print(f"Module error: '{self.name}'")
             print(err)

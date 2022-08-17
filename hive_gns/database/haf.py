@@ -25,7 +25,7 @@ class Haf:
         sql = f"""
             SELECT block_num, timestamp FROM hive.operations_view ORDER BY block_num DESC LIMIT 1;
         """
-        res = db.select(sql)
+        res = db.do('select', sql)
         return res[0]
 
     @classmethod
@@ -34,21 +34,21 @@ class Haf:
     
     @classmethod
     def _update_functions(cls, db, functions):
-        db.execute(functions, None)
-        db.commit()
+        db.do('execute', functions, None)
+        db.do('commit')
     
     @classmethod
     def _check_hooks(cls, db, module, hooks):
         enabled = hooks['enabled']
         has_entry = db.select_exists(f"SELECT module FROM {config['main_schema']}.module_state WHERE module='{module}'")
         if has_entry is False:
-            db.execute(
+            db.do('execute',
                 f"""
                     INSERT INTO {config['main_schema']}.module_state (module, enabled)
                     VALUES ('{module}', '{enabled}');
                 """)
         else:
-            db.execute(
+            db.do('execute',
                 f"""
                     UPDATE {config['main_schema']}.module_state SET enabled = '{enabled}'
                     WHERE module = '{module}';
@@ -60,21 +60,21 @@ class Haf:
             _funct = hooks[notif_name]['function']
             _op_id = int(hooks[notif_name]['op_id'])
             _filter = json.dumps(hooks[notif_name]['filter'])
-            has_hooks_entry = db.select_exists(
+            has_hooks_entry = db.do('select_exists',
                 f"""
                     SELECT module FROM {config['main_schema']}.module_hooks 
                     WHERE module='{module}' AND notif_name = '{notif_name}'
                 """
             )
             if has_hooks_entry is False:
-                db.execute(
+                db.do('execute',
                     f"""
                         INSERT INTO {config['main_schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
                         VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}');
                     """
                 )
             else:
-                db.execute(
+                db.do('execute',
                     f"""
                         UPDATE {config['main_schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
@@ -96,23 +96,19 @@ class Haf:
     @classmethod
     def _init_gns(cls, db):
         if config['reset'] == 'true':
-            resets = []
-            resets.append(f"SELECT hive.app_remove_context('{config['main_schema']}');")
-            resets.append(f"DROP SCHEMA {config['main_schema']} CASCADE;")
-            for sql in resets:
-                try:
-                    db.execute(sql)
-                except Exception as e:
-                    print(f"Reset encountered error: {e}")
-        db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
+            try:
+                db.do('execute', f"DROP SCHEMA {config['main_schema']} CASCADE;")
+            except Exception as e:
+                print(f"Reset encountered error: {e}")
+        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
-            db.execute(_sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
-        db.commit()
-        has_globs = db.select(f"SELECT * FROM {config['main_schema']}.global_props;")
+            db.do('execute', _sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
+        db.do('commit')
+        has_globs = db.do('select', f"SELECT * FROM {config['main_schema']}.global_props;")
         if not has_globs:
-            db.execute(f"INSERT INTO {config['main_schema']}.global_props (check_in) VALUES (NULL);")
-            db.commit()
+            db.do('execute', f"INSERT INTO {config['main_schema']}.global_props (check_in) VALUES (NULL);")
+            db.do('commit')
     
     @classmethod
     def _init_main_sync(cls, db):
@@ -120,7 +116,7 @@ class Haf:
         sql = f"""
             CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
         """
-        db.execute(sql)
+        db.do('execute', sql)
 
     @classmethod
     def init(cls, db):
@@ -128,7 +124,7 @@ class Haf:
         cls._init_modules(db)
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head(db)[0]
-        db.execute(f"CALL {config['main_schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
+        db.do('execute', f"CALL {config['main_schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
         Thread(target=AvailableModules.module_watch).start()
         Thread(target=cls._init_main_sync, args=(db,)).start()
         #Thread(target=cls._init_pruner).start()

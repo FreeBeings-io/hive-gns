@@ -12,7 +12,7 @@ class DbAccess:
         pass
 
     def select(self, sql:str, schema:list, one:bool = False):
-        _res = self._read_db.select(sql)
+        _res = self._read_db.do('select', sql)
         res = []
         if _res:
             assert len(schema) == len(_res[0]), 'invalid schema'
@@ -26,8 +26,8 @@ class DbAccess:
     @classmethod
     def write(self, sql:str):
         try:
-            self._write_db.execute(sql, None)
-            self._write_db.commit()
+            self._write_db.do('execute', sql)
+            self._write_db.do('commit')
             return True
         except:
             return False
@@ -39,8 +39,8 @@ class DbAccess:
         string_params = ["%s" for p in params]
         parameters = ", ".join(string_params)
         try:
-            self._write_db.execute(f"SELECT {func}( {parameters} );", params)
-            self._write_db.commit()
+            self._write_db.do('execute', f"SELECT {func}( {parameters} );", params)
+            self._write_db.do('commit')
             return True
         except:
             return False
@@ -48,15 +48,15 @@ class DbAccess:
     @classmethod
     def delete(self, sql:str):
         try:
-            self._write_db.execute(sql)
-            self._write_db.commit()
+            self._write_db.do('execute', sql)
+            self._write_db.do('commit')
             return True
         except:
             return False
 
     @classmethod
     def alter_schema(self, sql:str):
-        self._write_db.execute(sql)
-        self._write_db.commit()
+        self._write_db.do('execute', sql)
+        self._write_db.do('commit')
 
 db = DbAccess()
