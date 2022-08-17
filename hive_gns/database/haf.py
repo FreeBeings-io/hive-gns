@@ -12,7 +12,6 @@ from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
 
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
 
-MAIN_CONTEXT = "gns"
 
 config = Config.config
 
@@ -32,19 +31,6 @@ class Haf:
     @classmethod
     def _is_valid_module(cls, module):
         return bool(re.match(r'^[a-z]+[_]*$', module))
-
-    @classmethod
-    def _check_context(cls, db, name, start_block=None):
-        exists = db.select_one(
-            f"SELECT hive.app_context_exists( '{name}' );"
-        )
-        if exists is False:
-            db.select(f"SELECT hive.app_create_context( '{name}' );")
-            if start_block is not None:
-                db.select(f"SELECT hive.app_context_detach( '{name}' );")
-                db.select(f"SELECT hive.app_context_attach( '{name}', {(start_block-1)} );")
-            db.commit()
-            print(f"HAF SYNC:: created context: '{name}'")
     
     @classmethod
     def _update_functions(cls, db, functions):
@@ -119,7 +105,6 @@ class Haf:
                 except Exception as e:
                     print(f"Reset encountered error: {e}")
         db.execute(f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
-        cls._check_context(db, config['main_schema'])
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
             db.execute(_sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
@@ -136,7 +121,6 @@ class Haf:
             CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
         """
         db.execute(sql)
-        print("Main sync started successfully.")
 
     @classmethod
     def init(cls, db):
