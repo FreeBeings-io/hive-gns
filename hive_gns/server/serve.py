@@ -30,21 +30,24 @@ app.include_router(router_core_accounts)
 @app.get('/', tags=['system'])
 async def root():
     """Reports the status of Hive Global Notification System."""
-    report = {
-        'name': 'Hive Global Notification System',
-        'system': normalize_types(system_status.get_sys_status()),
-        'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
-    }
-    cur_time = datetime.strptime(report['timestamp'], UTC_TIMESTAMP_FORMAT)
-    sys_time = datetime.strptime(report['system']['block_time'], UTC_TIMESTAMP_FORMAT)
-    diff = cur_time - sys_time
-    health = "GOOD"
-    if diff.seconds > 30:
-        health = "BAD"
-    for mod in report['system']['modules']:
-        if report['system']['modules'][mod]['latest_gns_op_id'] < int(report['system']['gns_op_id'] * 0.99):
+    try:
+        report = {
+            'name': 'Hive Global Notification System',
+            'system': normalize_types(system_status.get_sys_status()),
+            'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
+        }
+        cur_time = datetime.strptime(report['timestamp'], UTC_TIMESTAMP_FORMAT)
+        sys_time = datetime.strptime(report['system']['block_time'], UTC_TIMESTAMP_FORMAT)
+        diff = cur_time - sys_time
+        health = "GOOD"
+        if diff.seconds > 30:
             health = "BAD"
-    report['health'] = health
+        for mod in report['system']['modules']:
+            if report['system']['modules'][mod]['latest_block_num'] < int(report['system']['block_num'] * 0.99):
+                health = "BAD"
+        report['health'] = health
+    except:
+        report = "System not ready."
     return report
 
 def run_server():

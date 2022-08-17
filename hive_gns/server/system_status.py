@@ -4,7 +4,6 @@ from hive_gns.engine.gns_sys import GnsStatus
 STATUS_MAPPING = (
     ('block_num', 'latest_block_num'),
     ('block_time', 'latest_block_time'),
-    ('gns_op_id', 'latest_gns_op_id'),
     ('last_updated', 'check_in'),
     ('sync_enabled', 'sync_enabled'),
     ('state_preloaded', 'state_preloaded')
