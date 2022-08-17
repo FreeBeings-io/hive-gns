@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS gns.global_props(
     latest_block_num INTEGER,
     latest_block_time TIMESTAMP,
-    latest_gns_op_id BIGINT,
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
     sync_enabled BOOLEAN DEFAULT true
@@ -9,16 +8,17 @@ CREATE TABLE IF NOT EXISTS gns.global_props(
 
 CREATE TABLE IF NOT EXISTS gns.ops(
     id BIGSERIAL PRIMARY KEY,
+    hive_op_id BIGINT REFERENCES hive.operations(id) ON DELETE CASCADE DEFERRABLE,
     op_type_id SMALLINT NOT NULL,
     block_num INTEGER NOT NULL,
     created TIMESTAMP,
     transaction_id BYTEA,
     body JSON
-) INHERITS( hive.gns );
+);
 
 CREATE TABLE IF NOT EXISTS gns.module_state(
     module VARCHAR(64) PRIMARY KEY,
-    latest_gns_op_id BIGINT,
+    latest_gns_op_id BIGINT DEFAULT 0,
     latest_block_num BIGINT DEFAULT 0,
     latest_block_time TIMESTAMP,
     check_in TIMESTAMP,
