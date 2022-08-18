@@ -3,7 +3,7 @@ from hive_gns.database.access import db
 
 GNS_OPS_FIELDS = ['gns_op_id', 'op_type_id', 'block_num', 'created', 'transaction_id', 'body']
 GNS_GLOBAL_PROPS_FIELDS = [
-    'latest_block_num', 'latest_gns_op_id', 'check_in',
+    'latest_block_num', 'check_in',
     'latest_block_time', 'sync_enabled', 'state_preloaded'
 ]
 GNS_MODULE_STATE_FIELDS = [

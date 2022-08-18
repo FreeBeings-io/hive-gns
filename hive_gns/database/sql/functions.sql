@@ -25,6 +25,26 @@ CREATE OR REPLACE FUNCTION gns.get_haf_head_block()
         END;
     $function$;
 
+CREATE OR REPLACE FUNCTION gns.get_haf_head_hive_opid()
+    RETURNS BIGINT
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        BEGIN
+            RETURN (SELECT id FROM hive.operations_view ORDER BY id DESC LIMIT 1);
+        END;
+    $function$;
+
+CREATE OR REPLACE FUNCTION gns.get_hive_op_id_from_block(_block_num INTEGER)
+    RETURNS BIGINT
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        BEGIN
+            RETURN (SELECT id FROM hive.operations_view WHERE block_num = _block_num ORDER BY id ASC LIMIT 1);
+        END;
+    $function$;
+
+    
+
 CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
     RETURNS BOOLEAN
     LANGUAGE plpgsql
@@ -82,7 +102,7 @@ CREATE OR REPLACE FUNCTION gns.module_long_running( _module VARCHAR)
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.terminate_sync( _module VARCHAR)
+CREATE OR REPLACE FUNCTION gns.module_terminate_sync( _module VARCHAR)
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
