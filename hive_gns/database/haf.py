@@ -40,7 +40,7 @@ class Haf:
     @classmethod
     def _check_hooks(cls, db, module, hooks):
         enabled = hooks['enabled']
-        has_entry = db.select_exists(f"SELECT module FROM {config['main_schema']}.module_state WHERE module='{module}'")
+        has_entry = db.do('select_exists', f"SELECT module FROM {config['main_schema']}.module_state WHERE module='{module}'")
         if has_entry is False:
             db.do('execute',
                 f"""
