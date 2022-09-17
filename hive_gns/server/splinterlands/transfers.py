@@ -30,7 +30,7 @@ def _get_transfers(acc, limit, token=None, sender=None, min_amount=None, max_amo
             )
             WHERE account = '{acc}'
         )
-    """.replace("gns.", f"{config['main_schema']}.")
+    """.replace("gns.", f"gns.")
     if token:
         sql += f"AND payload->'value'->>'json')::json->>'token' = '{token}' "
     if sender:

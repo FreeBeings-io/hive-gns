@@ -1,8 +1,8 @@
+from datetime import datetime
 import json
 import os
-import requests
 import time
-from datetime import datetime, timedelta
+import requests
 
 from hive_gns.tools import HIVE_NODES
 

@@ -17,11 +17,11 @@ CREATE OR REPLACE FUNCTION gns.get_internal_func( _op_type_id SMALLINT)
     $function$;
 
 CREATE OR REPLACE FUNCTION gns.get_haf_head_block()
-    RETURNS INT
+    RETURNS INTEGER
     LANGUAGE plpgsql
     VOLATILE AS $function$
         BEGIN
-            RETURN (SELECT block_num FROM hive.operations_view ORDER BY block_num DESC LIMIT 1);
+            RETURN (SELECT MAX(block_num) FROM hive.operations_view);
         END;
     $function$;
 
