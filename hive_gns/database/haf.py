@@ -142,11 +142,22 @@ class Haf:
     def _init_main_sync(cls, db):
         print("Starting main sync process...")
         db.do('execute', f"CALL {config['schema']}.sync_main();")
+    
+    @classmethod
+    def _cleanup(cls, db):
+        """Stops any running sync procedures from previous instances."""
+        db.do('execute', f"SELECT {config['schema']}.terminate_main_sync();")
+        working_dir = f'{INSTALL_DIR}/modules'
+        cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
+        for module in cls.module_list:
+            db.do('execute', f"SELECT {config['schema']}.module_terminate_sync('{module}');")
+        print("Cleanup complete.")
 
     @classmethod
     def init(cls, db):
         """Initializes the HAF sync process."""
         cls._init_gns(db)
+        cls._cleanup(db)
         cls._init_modules(db)
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head(db)[0] - 300
