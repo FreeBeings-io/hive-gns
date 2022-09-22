@@ -46,7 +46,8 @@ async def root():
             if report['system']['modules'][mod]['latest_block_num'] < int(report['system']['block_num'] * 0.99):
                 health = "BAD"
         report['health'] = health
-    except:
+    except Exception as e:
+        print(e)
         report = "System not ready."
     return report
 
