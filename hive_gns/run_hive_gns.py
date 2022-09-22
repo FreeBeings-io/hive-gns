@@ -14,9 +14,9 @@ def run():
     try:
         """Runs main application processes and server."""
         print("---   Global Notification System (Hive Blockchain) started   ---")
-        time.sleep(10)
+        time.sleep(5)
         Haf.init(db)
-        time.sleep(20)
+        time.sleep(5)
         run_server()
     except KeyboardInterrupt:
         sys.exit()
