@@ -38,7 +38,7 @@ async def root():
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
         head = make_request('condenser_api.get_dynamic_global_properties')['']
-        sys_head = report['system']['latest_block_num']
+        sys_head = report['system']['block_num']
 
         diff = head - sys_head
         health = "GOOD"
