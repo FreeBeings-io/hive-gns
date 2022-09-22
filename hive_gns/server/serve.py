@@ -10,6 +10,7 @@ from hive_gns.server.core.transfers import router_core_transfers
 from hive_gns.server.splinterlands.transfers import router_splinterlands_transfers
 from hive_gns.server.core.accounts import router_core_accounts
 from hive_gns.tools import normalize_types, UTC_TIMESTAMP_FORMAT
+from hive_gns.engine.hive import make_request
 
 config = Config.config
 
@@ -36,18 +37,19 @@ async def root():
             'system': normalize_types(system_status.get_sys_status()),
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
-        cur_time = datetime.strptime(report['timestamp'], UTC_TIMESTAMP_FORMAT)
-        sys_time = datetime.strptime(report['system']['block_time'], UTC_TIMESTAMP_FORMAT)
-        diff = cur_time - sys_time
+        head = make_request('condenser_api.get_dynamic_global_properties')['']
+        sys_head = report['system']['latest_block_num']
+
+        diff = head - sys_head
         health = "GOOD"
-        if diff.seconds > 30:
+        if diff > 30:
             health = "BAD"
         for mod in report['system']['modules']:
             if report['system']['modules'][mod]['latest_block_num'] < int(report['system']['block_num'] * 0.99):
                 health = "BAD"
         report['health'] = health
-    except Exception as e:
-        print(e)
+    except Exception as err:
+        print(err)
         report = "System not ready."
     return report
 
