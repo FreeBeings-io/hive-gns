@@ -143,7 +143,8 @@ class Haf:
         print("Cleanup complete.")
         cmds = [
             f"DROP SCHEMA {config['schema']} CASCADE;",
-            f"SELECT hive.app_remove_context('{config['schema']}');"
+            f"SELECT hive.app_remove_context('{config['schema']}');",
+            f"CREATE SCHEMA IF NOT EXISTS {config['schema']};"
         ]
         if config['reset'] == 'true':
             for cmd in cmds:
@@ -151,7 +152,7 @@ class Haf:
                     db.do('execute', cmd)
                 except Exception as err:
                     print(f"Reset encountered error: {err}")
-        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
+            cls._init_gns(db)
 
     @classmethod
     def init(cls, db):

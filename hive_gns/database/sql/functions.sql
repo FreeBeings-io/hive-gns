@@ -112,7 +112,7 @@ CREATE OR REPLACE FUNCTION gns.module_terminate_sync( _module VARCHAR)
             SELECT pid INTO _pid FROM pg_stat_activity
                 WHERE query = FORMAT('CALL gns.sync_module( ''%s'' );', _module);
             IF _pid IS NOT NULL THEN
-                SELECT pg_cancel_backend(_pid);
+                PERFORM pg_cancel_backend(_pid);
             END IF;
         END;
     $function$;
@@ -127,7 +127,7 @@ CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
             SELECT pid INTO _pid FROM pg_stat_activity
                 WHERE query = 'CALL gns.sync_main();';
             IF _pid IS NOT NULL THEN
-                SELECT pg_cancel_backend(_pid);
+                PERFORM pg_cancel_backend(_pid);
             END IF;
         END;
     $function$;
