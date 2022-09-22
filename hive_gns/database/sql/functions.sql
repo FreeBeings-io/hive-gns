@@ -43,8 +43,6 @@ CREATE OR REPLACE FUNCTION gns.get_hive_op_id_from_block(_block_num INTEGER)
         END;
     $function$;
 
-    
-
 CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
     RETURNS BOOLEAN
     LANGUAGE plpgsql
@@ -73,47 +71,18 @@ CREATE OR REPLACE FUNCTION gns.module_enabled( _module VARCHAR)
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.module_running( _module VARCHAR)
+CREATE OR REPLACE FUNCTION gns.is_sync_running()
     RETURNS BOOLEAN
-    LANGUAGE plpgsql
-    VOLATILE AS $function$
-        BEGIN
-            RETURN (
-                SELECT EXISTS (
-                    SELECT pid FROM pg_stat_activity
-                    WHERE query = FORMAT('CALL gns.sync_module( ''%s'' );', _module)
-                )
-            );
-        END;
-    $function$;
-
-CREATE OR REPLACE FUNCTION gns.module_long_running( _module VARCHAR)
-    RETURNS BOOLEAN
-    LANGUAGE plpgsql
-    VOLATILE AS $function$
-        BEGIN
-            RETURN (
-                SELECT EXISTS (
-                    SELECT * FROM gns.module_state
-                    WHERE module = _module
-                    AND check_in >= NOW() - INTERVAL '1 min'
-                )
-            );
-        END;
-    $function$;
-
-CREATE OR REPLACE FUNCTION gns.module_terminate_sync( _module VARCHAR)
-    RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
         DECLARE
-            _pid INTEGER;
         BEGIN
-            SELECT pid INTO _pid FROM pg_stat_activity
-                WHERE query = FORMAT('CALL gns.sync_module( ''%s'' );', _module);
-            IF _pid IS NOT NULL THEN
-                PERFORM pg_cancel_backend(_pid);
-            END IF;
+            RETURN (
+                SELECT EXISTS (
+                    SELECT * FROM pg_stat_activity
+                    WHERE query = 'CALL gns.sync_main();'
+                )
+            );
         END;
     $function$;
 
@@ -127,7 +96,7 @@ CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
             SELECT pid INTO _pid FROM pg_stat_activity
                 WHERE query = 'CALL gns.sync_main();';
             IF _pid IS NOT NULL THEN
-                PERFORM pg_cancel_backend(_pid);
+                SELECT pg_cancel_backend(_pid);
             END IF;
         END;
     $function$;

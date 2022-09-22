@@ -113,6 +113,7 @@ class Haf:
 
     @classmethod
     def _init_gns(cls, db):
+        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
                 .replace('gns.', f"{config['schema']}.")
@@ -135,16 +136,12 @@ class Haf:
     @classmethod
     def _cleanup(cls, db):
         """Stops any running sync procedures from previous instances."""
-        db.do('execute', f"SELECT {config['schema']}.terminate_main_sync();")
-        working_dir = f'{INSTALL_DIR}/modules'
-        cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
-        for module in cls.module_list:
-            db.do('execute', f"SELECT {config['schema']}.module_terminate_sync('{module}');")
-        print("Cleanup complete.")
+        running = db.do('select_one', f"SELECT {config['schema']}.is_sync_running();")
+        if running is True:
+            db.do('execute', f"SELECT {config['schema']}.terminate_main_sync();")
         cmds = [
             f"DROP SCHEMA {config['schema']} CASCADE;",
-            f"SELECT hive.app_remove_context('{config['schema']}');",
-            f"CREATE SCHEMA IF NOT EXISTS {config['schema']};"
+            f"SELECT hive.app_remove_context('{config['schema']}');"
         ]
         if config['reset'] == 'true':
             for cmd in cmds:
@@ -163,5 +160,4 @@ class Haf:
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head(db)[0] - 300
         db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
-        Thread(target=AvailableModules.module_watch).start()
         Thread(target=cls._init_main_sync, args=(db,)).start()
