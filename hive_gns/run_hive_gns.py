@@ -9,6 +9,7 @@ from hive_gns.database.haf import Haf
 config = Config.config
 
 def run():
+    """Main entrypoint."""
     db = DbSession('main')
     try:
         """Runs main application processes and server."""
