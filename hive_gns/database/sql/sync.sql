@@ -53,8 +53,8 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 ov.trx_in_block,
                                 tv.trx_hash,
                                 ov.body::json
-                            FROM hive.gns_operations_view ov
-                            LEFT JOIN hive.gns_transactions_view tv
+                            FROM hive.operations_view ov
+                            LEFT JOIN hive.transactions_view tv
                                 ON tv.block_num = ov.block_num
                                 AND tv.trx_in_block = ov.trx_in_block
                             WHERE ov.block_num >= _first_block
@@ -75,7 +75,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                     _begin := _target +1;
                 ELSE
                     RAISE NOTICE 'begin: %   target: %', _begin, _target;
-                    SELECT pg_sleep(1);
+                    PERFORM pg_sleep(1);
                 END IF;
             END LOOP;
         END;
