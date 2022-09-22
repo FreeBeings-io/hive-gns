@@ -29,6 +29,7 @@ class Module:
         self.db.do('commit')
     
     def enable(self):
+        """Enable module."""
         self.db.do(
             'execute',
             f"UPDATE {config['schema']}.module_state SET enabled = false WHERE module = '{self.name}';"
