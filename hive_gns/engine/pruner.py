@@ -1,19 +1,19 @@
 import time
 
-from hive_gns.database.access import delete
+from hive_gns.database.access import db
 
 class Pruner:
 
     @classmethod
-    def delete_old_ops(cls):
-        sql = f"""
+    def _delete_old_ops(cls):
+        sql = """
             DELETE FROM gns.ops
             WHERE created <= NOW() - INTERVAL '30 DAYS';
         """
-        return delete(sql)
+        return db.delete(sql)
 
     @classmethod
     def run_pruner(cls):
         while True:
-            cls.delete_old_ops()
+            cls._delete_old_ops()
             time.sleep(300)

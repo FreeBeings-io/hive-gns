@@ -11,5 +11,11 @@
         "function": "gns.core_gns",
         "notif_code": "gns",
         "filter": {"id": "gns"}
+    },
+    "vote": {
+        "op_id": 72,
+        "function": "gns.core_vote",
+        "notif_code": "vot",
+        "filter": {}
     }
 }

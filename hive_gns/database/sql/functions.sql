@@ -17,11 +17,11 @@ CREATE OR REPLACE FUNCTION gns.get_internal_func( _op_type_id SMALLINT)
     $function$;
 
 CREATE OR REPLACE FUNCTION gns.get_haf_head_block()
-    RETURNS INT
+    RETURNS INTEGER
     LANGUAGE plpgsql
     VOLATILE AS $function$
         BEGIN
-            RETURN (SELECT block_num FROM hive.operations_view ORDER BY block_num DESC LIMIT 1);
+            RETURN (SELECT MAX(block_num) FROM hive.operations_view);
         END;
     $function$;
 
@@ -111,6 +111,21 @@ CREATE OR REPLACE FUNCTION gns.module_terminate_sync( _module VARCHAR)
         BEGIN
             SELECT pid INTO _pid FROM pg_stat_activity
                 WHERE query = FORMAT('CALL gns.sync_module( ''%s'' );', _module);
+            IF _pid IS NOT NULL THEN
+                SELECT pg_cancel_backend(_pid);
+            END IF;
+        END;
+    $function$;
+
+CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
+    RETURNS void
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        DECLARE
+            _pid INTEGER;
+        BEGIN
+            SELECT pid INTO _pid FROM pg_stat_activity
+                WHERE query = 'CALL gns.sync_main();';
             IF _pid IS NOT NULL THEN
                 SELECT pg_cancel_backend(_pid);
             END IF;

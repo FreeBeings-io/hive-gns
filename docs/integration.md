@@ -10,12 +10,6 @@ These are the SQL functions triggered when new data from the blockchain matches 
 
 Study the `core_transfers` function to see how HBD and HIVE transfer notifications are handled. This can be found in `/hive_gns/modules/core/functions.sql`
 
-Below is an extract:
-
-```
-
-```
-
 ---
 
 ### 2) Your Hook JSON file

@@ -20,7 +20,7 @@ def _get_all_notifs(acc, limit, op_data=False):
         SELECT {_fields}
         FROM gns.account_notifs
         WHERE account = '{acc}'
-    """.replace("gns.", f"{config['main_schema']}.")
+    """.replace("gns.", f"gns.")
     if limit:
         sql += f"LIMIT {limit}"
     res = db.select(sql, fields)
@@ -35,7 +35,7 @@ def _get_unread_count(acc):
             SELECT (last_reads->>'all')::timestamp
             FROM gns.accounts WHERE account = '{acc}'
         );
-    """.replace("gns.", f"{config['main_schema']}.")
+    """.replace("gns.", f"gns.")
     res = db.select(sql, ['count'], True)
     return res['count']
 
@@ -45,7 +45,7 @@ def _get_preferences(account, module=None):
     sql = f"""
         SELECT {_fields} FROM gns.accounts
         WHERE account = '{account}';
-    """.replace("gns.", f"{config['main_schema']}.")
+    """.replace("gns.", f"gns.")
     res = db.select(sql, fields, True)
     if module and module in res['prefs']:
         return {

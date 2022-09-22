@@ -3,7 +3,7 @@ ARG DB_NAME
 ARG DB_USERNAME
 ARG DB_PASSWORD
 ARG SERVER_HOST
-ARG PORT=8080
+ARG SERVER_PORT
 ARG MAIN_SCHEMA=gns
 ARG RESET=false
 
@@ -20,3 +20,5 @@ COPY . ./
 RUN pip install --no-cache-dir -e .
 
 CMD python3 hive_gns/run_hive_gns.py
+
+EXPOSE ${SERVER_PORT}

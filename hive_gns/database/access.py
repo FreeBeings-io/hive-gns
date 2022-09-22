@@ -23,7 +23,6 @@ class DbAccess:
             else:
                 return normalize_types(res)
 
-    @classmethod
     def write(self, sql:str):
         try:
             self._write_db.do('execute', sql)
@@ -32,7 +31,6 @@ class DbAccess:
         except:
             return False
 
-    @classmethod
     def perform(self, func:str, params:list):
         #for p in params:
             #assert isinstance(p, str), 'function params must be strings'
@@ -45,7 +43,6 @@ class DbAccess:
         except:
             return False
 
-    @classmethod
     def delete(self, sql:str):
         try:
             self._write_db.do('execute', sql)
@@ -54,7 +51,6 @@ class DbAccess:
         except:
             return False
 
-    @classmethod
     def alter_schema(self, sql:str):
         self._write_db.do('execute', sql)
         self._write_db.do('commit')

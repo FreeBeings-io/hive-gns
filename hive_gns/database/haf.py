@@ -1,15 +1,13 @@
-from faulthandler import is_enabled
 import json
 import os
 import re
 from threading import Thread
-import time
 from hive_gns.config import Config
-from hive_gns.database.core import DbSession
 from hive_gns.database.modules import AvailableModules, Module
 
 from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
 
+START_DAYS_DISTANCE = 1
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
 
 
@@ -22,11 +20,20 @@ class Haf:
 
     @classmethod
     def _get_haf_sync_head(cls, db):
-        sql = f"""
-            SELECT block_num, timestamp FROM hive.operations_view ORDER BY block_num DESC LIMIT 1;
+        sql = """
+            SELECT block_num, timestamp
+            FROM hive.operations_view
+            ORDER BY block_num DESC LIMIT 1;
         """
         res = db.do('select', sql)
         return res[0]
+    
+    @classmethod
+    def _get_start_block(cls, db):
+        sql = "SELECT gns.get_haf_head_block();"
+        res = db.do('select', sql)
+        head = res[0]
+        return head[0] - (START_DAYS_DISTANCE * 24 * 60 * 20)
 
     @classmethod
     def _is_valid_module(cls, module):
@@ -38,19 +45,30 @@ class Haf:
         db.do('commit')
     
     @classmethod
+    def _check_context(cls, db, start_block=None):
+        exists = db.do('select_one', f"SELECT hive.app_context_exists( '{config['schema']}' );")
+        if exists is False:
+            db.do('select', f"SELECT hive.app_create_context( '{config['schema']}' );")
+            if start_block is not None:
+                db.do('select', f"SELECT hive.app_context_detach( '{config['schema']}' );")
+                db.do('select', f"SELECT hive.app_context_attach( '{config['schema']}', {(start_block-1)} );")
+            db.do('commit')
+            print(f"HAF SYNC:: created context: '{config['schema']}'")
+    
+    @classmethod
     def _check_hooks(cls, db, module, hooks):
         enabled = hooks['enabled']
-        has_entry = db.do('select_exists', f"SELECT module FROM {config['main_schema']}.module_state WHERE module='{module}'")
+        has_entry = db.do('select_exists', f"SELECT module FROM {config['schema']}.module_state WHERE module='{module}'")
         if has_entry is False:
             db.do('execute',
                 f"""
-                    INSERT INTO {config['main_schema']}.module_state (module, enabled)
+                    INSERT INTO {config['schema']}.module_state (module, enabled)
                     VALUES ('{module}', '{enabled}');
                 """)
         else:
             db.do('execute',
                 f"""
-                    UPDATE {config['main_schema']}.module_state SET enabled = '{enabled}'
+                    UPDATE {config['schema']}.module_state SET enabled = '{enabled}'
                     WHERE module = '{module}';
                 """)
         del hooks['enabled']
@@ -62,21 +80,21 @@ class Haf:
             _filter = json.dumps(hooks[notif_name]['filter'])
             has_hooks_entry = db.do('select_exists',
                 f"""
-                    SELECT module FROM {config['main_schema']}.module_hooks 
+                    SELECT module FROM {config['schema']}.module_hooks 
                     WHERE module='{module}' AND notif_name = '{notif_name}'
                 """
             )
             if has_hooks_entry is False:
                 db.do('execute',
                     f"""
-                        INSERT INTO {config['main_schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
+                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
                         VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}');
                     """
                 )
             else:
                 db.do('execute',
                     f"""
-                        UPDATE {config['main_schema']}.module_hooks 
+                        UPDATE {config['schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
                             funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}';
                     """
@@ -87,44 +105,62 @@ class Haf:
         working_dir = f'{INSTALL_DIR}/modules'
         cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
         for module in cls.module_list:
-            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}."))
-            functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
+            hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace('gns.', f"{config['schema']}."))
+            functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace('gns.', f"{config['schema']}.")
             cls._check_hooks(db, module, hooks)
             cls._update_functions(db, functions)
             AvailableModules.add_module(module, Module(db, module, hooks))
 
     @classmethod
     def _init_gns(cls, db):
+        cmds = [
+            f"DROP SCHEMA {config['schema']} CASCADE;",
+            f"SELECT hive.app_remove_context('{config['schema']}');"
+        ]
         if config['reset'] == 'true':
-            try:
-                db.do('execute', f"DROP SCHEMA {config['main_schema']} CASCADE;")
-            except Exception as e:
-                print(f"Reset encountered error: {e}")
-        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['main_schema']};")
+            for cmd in cmds:
+                try:
+                    db.do('execute', cmd)
+                except Exception as err:
+                    print(f"Reset encountered error: {err}")
+        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
-            _sql = open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read().replace("gns.", f"{config['main_schema']}.")
-            db.do('execute', _sql.replace("INHERITS( hive.gns )", f"INHERITS( hive.{config['main_schema']} )"))
+            _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
+                .replace('gns.', f"{config['schema']}.")
+                .replace('gns_operations_view', f"{config['schema']}_operations_view")
+                .replace('gns_transactions_view', f"{config['schema']}_transactions_view")
+            )
+            db.do('execute', _sql)
         db.do('commit')
-        has_globs = db.do('select', f"SELECT * FROM {config['main_schema']}.global_props;")
+        has_globs = db.do('select', f"SELECT * FROM {config['schema']}.global_props;")
         if not has_globs:
-            db.do('execute', f"INSERT INTO {config['main_schema']}.global_props (check_in) VALUES (NULL);")
+            db.do('execute', f"INSERT INTO {config['schema']}.global_props (check_in) VALUES (NULL);")
             db.do('commit')
+        cls._check_context(db, cls._get_start_block(db))
     
     @classmethod
     def _init_main_sync(cls, db):
         print("Starting main sync process...")
-        sql = f"""
-            CALL {config['main_schema']}.sync_main( '{config['main_schema']}' );
-        """
-        db.do('execute', sql)
+        db.do('execute', f"CALL {config['schema']}.sync_main();")
+    
+    @classmethod
+    def _cleanup(cls, db):
+        """Stops any running sync procedures from previous instances."""
+        db.do('execute', f"SELECT {config['schema']}.terminate_main_sync();")
+        working_dir = f'{INSTALL_DIR}/modules'
+        cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
+        for module in cls.module_list:
+            db.do('execute', f"SELECT {config['schema']}.module_terminate_sync('{module}');")
+        print("Cleanup complete.")
 
     @classmethod
     def init(cls, db):
+        """Initializes the HAF sync process."""
         cls._init_gns(db)
+        cls._cleanup(db)
         cls._init_modules(db)
         print("Running state_preload script...")
-        end_block = cls._get_haf_sync_head(db)[0]
-        db.do('execute', f"CALL {config['main_schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
+        end_block = cls._get_haf_sync_head(db)[0] - 300
+        db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
         Thread(target=AvailableModules.module_watch).start()
         Thread(target=cls._init_main_sync, args=(db,)).start()
-        #Thread(target=cls._init_pruner).start()
