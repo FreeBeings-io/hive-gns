@@ -18,7 +18,7 @@ class DbSession:
                 database=config['db_name'],
                 user=config['db_username'],
                 password=config['db_password'],
-                application_name='gns' + '-' + self.pref,
+                application_name=config['schema'] + '-' + self.pref,
                 connect_timeout=20,
                 keepalives=1
             )

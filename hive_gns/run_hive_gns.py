@@ -14,6 +14,7 @@ def run():
     try:
         """Runs main application processes and server."""
         print("---   Global Notification System (Hive Blockchain) started   ---")
+        time.sleep(10)
         Haf.init(db)
         time.sleep(20)
         run_server()
