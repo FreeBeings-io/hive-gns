@@ -113,17 +113,6 @@ class Haf:
 
     @classmethod
     def _init_gns(cls, db):
-        cmds = [
-            f"DROP SCHEMA {config['schema']} CASCADE;",
-            f"SELECT hive.app_remove_context('{config['schema']}');"
-        ]
-        if config['reset'] == 'true':
-            for cmd in cmds:
-                try:
-                    db.do('execute', cmd)
-                except Exception as err:
-                    print(f"Reset encountered error: {err}")
-        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
                 .replace('gns.', f"{config['schema']}.")
@@ -152,6 +141,17 @@ class Haf:
         for module in cls.module_list:
             db.do('execute', f"SELECT {config['schema']}.module_terminate_sync('{module}');")
         print("Cleanup complete.")
+        cmds = [
+            f"DROP SCHEMA {config['schema']} CASCADE;",
+            f"SELECT hive.app_remove_context('{config['schema']}');"
+        ]
+        if config['reset'] == 'true':
+            for cmd in cmds:
+                try:
+                    db.do('execute', cmd)
+                except Exception as err:
+                    print(f"Reset encountered error: {err}")
+        db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
 
     @classmethod
     def init(cls, db):
