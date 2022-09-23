@@ -37,15 +37,15 @@ async def root():
             'system': normalize_types(system_status.get_sys_status()),
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
-        head = make_request('condenser_api.get_dynamic_global_properties')['']
-        sys_head = report['system']['block_num']
+        head = make_request('condenser_api.get_dynamic_global_properties')['head_block_number']
+        sys_head = report['system']['block_num'] or 0
 
         diff = head - sys_head
         health = "GOOD"
         if diff > 30:
             health = "BAD"
         for mod in report['system']['modules']:
-            if report['system']['modules'][mod]['latest_block_num'] < int(report['system']['block_num'] * 0.99):
+            if report['system']['modules'][mod]['latest_block_num'] < int(sys_head * 0.99):
                 health = "BAD"
         report['health'] = health
     except Exception as err:
