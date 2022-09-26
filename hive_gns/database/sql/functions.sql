@@ -80,7 +80,7 @@ CREATE OR REPLACE FUNCTION gns.is_sync_running()
             RETURN (
                 SELECT EXISTS (
                     SELECT * FROM pg_stat_activity
-                    WHERE query = 'CALL gns.sync_main();'
+                    WHERE application_name = 'gns-main'
                 )
             );
         END;
@@ -94,7 +94,7 @@ CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
             _pid INTEGER;
         BEGIN
             SELECT pid INTO _pid FROM pg_stat_activity
-                WHERE query = 'CALL gns.sync_main();';
+                WHERE application_name = 'gns-main';
             IF _pid IS NOT NULL THEN
                 PERFORM pg_cancel_backend(_pid);
             END IF;
