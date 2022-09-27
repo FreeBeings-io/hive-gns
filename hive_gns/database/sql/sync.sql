@@ -105,7 +105,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
             _last_block INTEGER;
             _op_ids SMALLINT[];
             _latest_gns_op BIGINT;
-            _batch_size INTEGER := 10000;
+            _batch_size INTEGER := 100000;
         BEGIN
             SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
             SELECT latest_gns_op_id INTO _latest_gns_op FROM gns.module_state WHERE module = _module_name;
