@@ -30,7 +30,7 @@ class Haf:
     
     @classmethod
     def _get_start_block(cls, db):
-        sql = "SELECT gns.get_haf_head_block();"
+        sql = f"SELECT {config['schema']}.get_haf_head_block();"
         res = db.do('select', sql)
         head = res[0]
         return head[0] - (START_DAYS_DISTANCE * 24 * 60 * 20)
