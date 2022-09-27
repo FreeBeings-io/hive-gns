@@ -3,6 +3,7 @@ import os
 import re
 from threading import Thread
 from hive_gns.config import Config
+from hive_gns.database.core import DbSession
 from hive_gns.database.modules import AvailableModules, Module
 
 from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
@@ -160,4 +161,5 @@ class Haf:
         print("Running state_preload script...")
         end_block = cls._get_haf_sync_head(db)[0] - 300
         db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
-        Thread(target=cls._init_main_sync, args=(db,)).start()
+        db_main = DbSession('main')
+        Thread(target=cls._init_main_sync, args=(db_main,)).start()

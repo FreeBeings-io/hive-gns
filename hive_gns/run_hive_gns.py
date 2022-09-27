@@ -10,7 +10,7 @@ config = Config.config
 
 def run():
     """Main entrypoint."""
-    db = DbSession('main')
+    db = DbSession('setup')
     try:
         """Runs main application processes and server."""
         print("---   Global Notification System (Hive Blockchain) started   ---")
