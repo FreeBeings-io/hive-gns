@@ -9,7 +9,7 @@ class Pruner:
         sql = """
             DELETE FROM gns.ops
             WHERE created <= NOW() - INTERVAL '30 DAYS';
-        """
+        """.replace("gns.", f"{config['schema']}.")
         return db.delete(sql)
 
     @classmethod

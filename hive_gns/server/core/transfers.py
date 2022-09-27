@@ -30,7 +30,7 @@ def _get_transfers(acc, limit, currency=None, sender=None, min_amount=None, max_
             )
             FROM gns.accounts WHERE account = '{acc}'
         )
-    """.replace("gns.", f"gns.")
+    """.replace("gns.", f"{config['schema']}.")
     if currency:
         nai = NAI_MAP[currency]
         sql += f"AND payload->'value'->'amount'->>'nai' = '{nai}' "

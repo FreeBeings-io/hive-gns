@@ -26,7 +26,7 @@ class GnsOps:
                 AND gns_op_id >= {lower}
                 AND gns_op_id <= {upper}
             ORDER BY gns_op_id ASC;
-        """.replace("gns.", f"gns.")
+        """.replace("gns.", f"{config['schema']}.")
         res = db.select(sql, GNS_OPS_FIELDS)
         return res
 
@@ -37,7 +37,7 @@ class GnsStatus:
         fields = ", ".join(GNS_GLOBAL_PROPS_FIELDS)
         sql = f"""
             SELECT {fields} FROM gns.global_props;
-        """.replace("gns.", f"gns.")
+        """.replace("gns.", f"{config['schema']}.")
         res = db.select(sql, GNS_GLOBAL_PROPS_FIELDS)
         return res[0]
 
@@ -52,7 +52,7 @@ class GnsStatus:
         _res = []
         sql = f"""
             SELECT module FROM gns.module_state;
-        """.replace("gns.", f"gns.")
+        """.replace("gns.", f"{config['schema']}.")
         res = db.select(sql, ['module'])
         for entry in res:
             _res.append(entry['module'])
@@ -64,7 +64,7 @@ class GnsStatus:
         sql = f"""
             SELECT {fields} FROM gns.module_state
             WHERE module = '{module}';
-        """.replace("gns.", f"gns.")
+        """.replace("gns.", f"{config['schema']}.")
         res = db.select(sql, GNS_MODULE_STATE_FIELDS)
         return res[0]
 
@@ -79,7 +79,7 @@ class GnsStatus:
             UPDATE gns.module_state
             SET latest_gns_op_id = {latest_gns_op_id}
             WHERE module = '{module}';
-        """.replace("gns.", f"gns.")
+        """.replace("gns.", f"{config['schema']}.")
         done = db.write(sql)
         if done == False:
             print(f"Failed to update state for '{module}' module. {latest_gns_op_id}")  #TODO: send to logging module
