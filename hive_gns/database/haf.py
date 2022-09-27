@@ -138,7 +138,7 @@ class Haf:
         """Stops any running sync procedures from previous instances."""
         running = db.do('select_one', f"SELECT {config['schema']}.is_sync_running();")
         if running is True:
-            db.do('execute', f"SELECT {config['schema']}.terminate_main_sync();")
+            db.do('execute', f"SELECT {config['schema']}.terminate_main_sync('{config['schema']}-main');")
         cmds = [
             f"DROP SCHEMA {config['schema']} CASCADE;",
             f"SELECT hive.app_remove_context('{config['schema']}');"

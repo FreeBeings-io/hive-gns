@@ -86,7 +86,7 @@ CREATE OR REPLACE FUNCTION gns.is_sync_running()
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
+CREATE OR REPLACE FUNCTION gns.terminate_main_sync(app_desc VARCHAR)
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -94,7 +94,7 @@ CREATE OR REPLACE FUNCTION gns.terminate_main_sync()
             _pid INTEGER;
         BEGIN
             SELECT pid INTO _pid FROM pg_stat_activity
-                WHERE application_name = 'gns-main';
+                WHERE application_name = app_desc;
             IF _pid IS NOT NULL THEN
                 PERFORM pg_cancel_backend(_pid);
             END IF;
