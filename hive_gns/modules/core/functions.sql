@@ -146,6 +146,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
         EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE E'Got exception:
                 SQLSTATE: % 
-                SQLERRM: %', SQLSTATE, SQLERRM;
+                SQLERRM: %
+                DATA: %', SQLSTATE, SQLERRM, _body;
         END;
         $function$;
