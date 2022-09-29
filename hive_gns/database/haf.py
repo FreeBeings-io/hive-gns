@@ -28,13 +28,6 @@ class Haf:
         """
         res = db.do('select', sql)
         return res[0]
-    
-    @classmethod
-    def _get_start_block(cls, db):
-        sql = f"SELECT {config['schema']}.get_haf_head_block();"
-        res = db.do('select', sql)
-        head = res[0]
-        return head[0] - (START_DAYS_DISTANCE * 24 * 60 * 20)
 
     @classmethod
     def _is_valid_module(cls, module):
@@ -44,17 +37,6 @@ class Haf:
     def _update_functions(cls, db, functions):
         db.do('execute', functions, None)
         db.do('commit')
-    
-    @classmethod
-    def _check_context(cls, db, start_block=None):
-        exists = db.do('select_one', f"SELECT hive.app_context_exists( '{config['schema']}' );")
-        if exists is False:
-            db.do('select', f"SELECT hive.app_create_context( '{config['schema']}' );")
-            if start_block is not None:
-                db.do('select', f"SELECT hive.app_context_detach( '{config['schema']}' );")
-                db.do('select', f"SELECT hive.app_context_attach( '{config['schema']}', {(start_block-1)} );")
-            db.do('commit')
-            print(f"HAF SYNC:: created context: '{config['schema']}'")
     
     @classmethod
     def _check_hooks(cls, db, module, hooks):
@@ -127,7 +109,6 @@ class Haf:
         if not has_globs:
             db.do('execute', f"INSERT INTO {config['schema']}.global_props (check_in) VALUES (NULL);")
             db.do('commit')
-        cls._check_context(db, cls._get_start_block(db))
     
     @classmethod
     def _init_main_sync(cls, db):
@@ -137,12 +118,11 @@ class Haf:
     @classmethod
     def _cleanup(cls, db):
         """Stops any running sync procedures from previous instances."""
-        running = db.do('select_one', f"SELECT {config['schema']}.is_sync_running();")
+        running = db.do('select_one', f"SELECT {config['schema']}.is_sync_running('{config['schema']}-main');")
         if running is True:
             db.do('execute', f"SELECT {config['schema']}.terminate_main_sync('{config['schema']}-main');")
         cmds = [
             f"DROP SCHEMA {config['schema']} CASCADE;",
-            f"SELECT hive.app_remove_context('{config['schema']}');"
         ]
         if config['reset'] == 'true':
             for cmd in cmds:
