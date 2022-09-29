@@ -7,16 +7,15 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             tempnotif RECORD;
             tempmodule RECORD;
             _module_schema VARCHAR;
+            _to_attach BOOLEAN;
 
             _global_start_block INTEGER;
             _head_haf_block_num INTEGER;
             _latest_block_num INTEGER;
+            _next_block_range hive.blocks_range;
             _first_block INTEGER;
             _last_block INTEGER;
             _step INTEGER;
-
-            _begin INTEGER;
-            _target INTEGER;
         BEGIN
             _step := 1000;
             _head_haf_block_num := gns.get_haf_head_block();
@@ -25,23 +24,27 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             RAISE NOTICE 'Global start block: %s', _head_haf_block_num;
             SELECT latest_block_num INTO _latest_block_num FROM gns.global_props;
 
-            --decide which block to start at initially
-            IF _latest_block_num IS NULL THEN
-                _begin := _global_start_block;
-            ELSE
-                _begin := _latest_block_num;
-            END IF;
-
-            -- begin main sync loop
             WHILE gns.global_sync_enabled() LOOP
-                _target := gns.get_haf_head_block();
-                IF _target - _begin >= 0 THEN
-                    RAISE NOTICE 'New block range: <%,%>', _begin, _target;
-                    FOR _first_block IN _begin .. _target BY _step LOOP
+                _to_attach := false;
+                _next_block_range := hive.app_next_block('gns');
+
+                IF _next_block_range IS NULL THEN
+                    RAISE WARNING 'Waiting for next block...';
+                ELSE
+                    -- determine if massive sync is needed
+                    IF _next_block_range.last_block - _next_block_range.first_block > 0 THEN
+                        -- detach context
+                        PERFORM hive.app_context_detach('gns');
+                        RAISE NOTICE 'Context detached.';
+                        _to_attach := true;
+                        COMMIT;
+                    END IF;
+                    RAISE NOTICE 'New block range: <%,%>', _next_block_range.first_block, _next_block_range.last_block;
+                    FOR _first_block IN _next_block_range.first_block .. _next_block_range.last_block BY _step LOOP
                         _last_block := _first_block + _step - 1;
 
-                        IF _last_block > _target THEN --- in case the _step is larger than range length
-                            _last_block := _target;
+                        IF _last_block > _next_block_range.last_block THEN --- in case the _step is larger than range length
+                            _last_block := _next_block_range.last_block;
                         END IF;
 
                         RAISE NOTICE 'Attempting to process a block range: <%, %>', _first_block, _last_block;
@@ -54,8 +57,8 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 ov.trx_in_block,
                                 tv.trx_hash,
                                 ov.body::json
-                            FROM hive.operations_view ov
-                            LEFT JOIN hive.transactions_view tv
+                            FROM hive.gns_operations_view ov
+                            LEFT JOIN hive.gns_transactions_view tv
                                 ON tv.block_num = ov.block_num
                                 AND tv.trx_in_block = ov.trx_in_block
                             WHERE ov.block_num >= _first_block
@@ -84,10 +87,12 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                         END LOOP;
                         COMMIT;
                     END LOOP;
-                    _begin := _target +1;
-                ELSE
-                    RAISE NOTICE 'begin: %   target: %', _begin, _target;
-                    PERFORM pg_sleep(1);
+                    IF _to_attach = true THEN
+                        -- attach context
+                        PERFORM hive.app_context_attach('gns', _last_block);
+                        RAISE NOTICE 'Context attached.';
+                        COMMIT;
+                    END IF;
                 END IF;
             END LOOP;
         END;
