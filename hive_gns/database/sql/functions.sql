@@ -71,7 +71,7 @@ CREATE OR REPLACE FUNCTION gns.module_enabled( _module VARCHAR)
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.is_sync_running()
+CREATE OR REPLACE FUNCTION gns.is_sync_running(app_desc VARCHAR)
     RETURNS BOOLEAN
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -80,7 +80,7 @@ CREATE OR REPLACE FUNCTION gns.is_sync_running()
             RETURN (
                 SELECT EXISTS (
                     SELECT * FROM pg_stat_activity
-                    WHERE application_name = 'gns-main'
+                    WHERE application_name = app_desc
                 )
             );
         END;
