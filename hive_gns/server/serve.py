@@ -61,6 +61,7 @@ async def root():
                     diff_mod = mod_head - sys_head
                     health += f"BAD - module '{mod}' is {diff_mod} blocks behind... "
         report['health'] = health
+        report['app_data'] = system_status.get_app_data()
     except Exception as err:
         print(err)
         report = "System not ready."

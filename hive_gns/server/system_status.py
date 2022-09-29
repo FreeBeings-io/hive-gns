@@ -23,3 +23,15 @@ def get_sys_status():
         sync[sync_key] = cur[map_key]
     sync['modules'] = get_module_status()
     return sync
+
+def get_app_data():
+    data = {
+        "Social": {
+            "Hive/HBD transfers": "core:trn",
+            "Social": "core:vot"
+        },
+        "Splinterlands": {
+            "DEC transfers": "splinterlands:trn"
+        }
+    }
+    return data
