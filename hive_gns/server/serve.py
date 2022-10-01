@@ -36,7 +36,7 @@ app.include_router(router_core_transfers)
 app.include_router(router_splinterlands_transfers)
 app.include_router(router_core_accounts)
 
-@app.get('/api', tags=['system'])
+@app.get('/', tags=['system'])
 async def root():
     """Reports the status of Hive Global Notification System."""
     try:
