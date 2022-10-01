@@ -5,6 +5,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
         DECLARE
             temprow RECORD;
             tempnotif RECORD;
+            tempmodule RECORD;
             _module_schema VARCHAR;
 
             _global_start_block INTEGER;
@@ -17,7 +18,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 10000;
+            _step := 10;
             _head_haf_block_num := hive.app_get_irreversible_block();
             RAISE NOTICE 'Found irreversible head haf block num: %s', _head_haf_block_num;
             _global_start_block := _head_haf_block_num - (1 * 24 * 60 * 20);
@@ -68,7 +69,17 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 temprow.timestamp, temprow.trx_hash, temprow.body);
                         END LOOP;
                         RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
-                        -- update hlobal props and save
+                        -- sync modules
+                        FOR tempmodule IN
+                            SELECT * FROM gns.module_state 
+                        LOOP
+                            IF tempmodule.enabled = true THEN
+                                RAISE NOTICE 'Attempting to sync module: %', tempmodule.module;
+                                CALL gns.sync_module(tempmodule.module);
+                                RAISE NOTICE 'Module synced: %', tempmodule.module;
+                            END IF;
+                        END LOOP;
+                        -- update global props and save
                         UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block;
                         COMMIT;
                     END LOOP;
@@ -93,45 +104,41 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
             _last_block INTEGER;
             _op_ids SMALLINT[];
             _latest_gns_op BIGINT;
-            _batch_size INTEGER := 10000;
         BEGIN
-            WHILE gns.module_enabled(_module_name) LOOP
-                SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
-                SELECT latest_gns_op_id INTO _latest_gns_op FROM gns.module_state WHERE module = _module_name;
+            SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
+            SELECT latest_gns_op_id INTO _latest_gns_op FROM gns.module_state WHERE module = _module_name;
 
-                FOR temprow IN
-                    SELECT
-                        id,
-                        op_type_id,
-                        block_num,
-                        created,
-                        transaction_id,
-                        body::json
-                    FROM gns.ops
-                    WHERE id > _latest_gns_op
-                        AND id <= (_latest_gns_op + _batch_size)
-                        AND op_type_id = ANY (_op_ids)
-                    ORDER BY id
+            FOR temprow IN
+                SELECT
+                    id,
+                    op_type_id,
+                    block_num,
+                    created,
+                    transaction_id,
+                    body::json
+                FROM gns.ops
+                WHERE id > _latest_gns_op
+                    AND op_type_id = ANY (_op_ids)
+                ORDER BY id
+            LOOP
+                FOR tempnotif IN 
+                    SELECT DISTINCT ON (funct) * FROM gns.module_hooks
+                    WHERE module = _module_name
+                    AND op_id = temprow.op_type_id
                 LOOP
-                    FOR tempnotif IN 
-                        SELECT DISTINCT ON (funct) * FROM gns.module_hooks
-                        WHERE module = _module_name
-                        AND op_id = temprow.op_type_id
-                    LOOP
-                        IF gns.check_op_filter(temprow.op_type_id, temprow.body, tempnotif.notif_filter) THEN
-                            EXECUTE FORMAT('SELECT %s ($1,$2,$3,$4,$5)', tempnotif.funct)
-                                USING temprow.id, temprow.transaction_id, temprow.created, temprow.body, tempnotif.notif_code;
-                        END IF;
-                    END LOOP;
-                    _last_block := temprow.block_num;
-                    _last_op := temprow.id;
+                    IF gns.check_op_filter(temprow.op_type_id, temprow.body, tempnotif.notif_filter) THEN
+                        EXECUTE FORMAT('SELECT %s ($1,$2,$3,$4,$5)', tempnotif.funct)
+                            USING temprow.id, temprow.transaction_id, temprow.created, temprow.body, tempnotif.notif_code;
+                    END IF;
                 END LOOP;
-                -- save done as run end
-                
-                UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_gns_op_id = COALESCE(_last_op, _latest_gns_op) WHERE module = _module_name;
-                UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
-                COMMIT;
+                _last_block := temprow.block_num;
+                _last_op := temprow.id;
             END LOOP;
+            -- save done as run end
+            
+            UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
+            UPDATE gns.module_state SET latest_gns_op_id = COALESCE(_last_op, _latest_gns_op) WHERE module = _module_name;
+            UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
+            COMMIT;
         END;
     $$;
