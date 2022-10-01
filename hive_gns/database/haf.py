@@ -96,8 +96,6 @@ class Haf:
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
             _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
                 .replace('gns.', f"{config['schema']}.")
-                .replace('gns_operations_view', f"{config['schema']}_operations_view")
-                .replace('gns_transactions_view', f"{config['schema']}_transactions_view")
             )
             db.do('execute', _sql)
         db.do('commit')
