@@ -21,11 +21,7 @@ class Haf:
 
     @classmethod
     def _get_haf_sync_head(cls, db):
-        sql = """
-            SELECT block_num, timestamp
-            FROM hive.operations_view
-            ORDER BY block_num DESC LIMIT 1;
-        """
+        sql = "SELECT hive.app_get_irreversible_block();"
         res = db.do('select', sql)
         return res[0]
 
