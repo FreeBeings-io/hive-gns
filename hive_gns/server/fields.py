@@ -8,7 +8,7 @@ class Fields:
             """Fields for the `_get_all_notifs()` global endpoint function."""
             res = ['created', 'remark']
             if extra:
-                return res.extend(extra)
+                return res + extra
             else:
                 return res
 
@@ -19,7 +19,16 @@ class Fields:
             """Fields for the `_get_transfers()` core endpoint function."""
             res = ['created', 'remark']
             if extra:
-                return res.extend(extra)
+                return res + extra
+            else:
+                return res
+        
+        @classmethod
+        def get_votes(cls, extra=None):
+            """Fields for the `_get_votes()` core endpoint function."""
+            res = ['created', 'remark']
+            if extra:
+                return res + extra
             else:
                 return res
         
@@ -36,6 +45,6 @@ class Fields:
             """Field for the `_get_transfers()` Splinterlands endpoint function."""
             res = ['created', 'remark']
             if extra:
-                return res.extend(extra)
+                return res + extra
             else:
                 return res

@@ -8,6 +8,7 @@ from hive_gns.config import Config
 from hive_gns.server import system_status
 from hive_gns.server.api_metadata import TITLE, DESCRIPTION, VERSION, CONTACT, LICENSE, TAGS_METADATA
 from hive_gns.server.core.transfers import router_core_transfers
+from hive_gns.server.core.votes import router_core_votes
 from hive_gns.server.splinterlands.transfers import router_splinterlands_transfers
 from hive_gns.server.core.accounts import router_core_accounts
 from hive_gns.tools import normalize_types, UTC_TIMESTAMP_FORMAT
@@ -33,6 +34,7 @@ app.add_middleware(
 )
 
 app.include_router(router_core_transfers)
+app.include_router(router_core_votes)
 app.include_router(router_splinterlands_transfers)
 app.include_router(router_core_accounts)
 
