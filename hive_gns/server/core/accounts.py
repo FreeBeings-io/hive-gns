@@ -10,7 +10,7 @@ from hive_gns.tools import is_valid_hive_account
 config = Config.config
 router_core_accounts = APIRouter()
 
-def _get_all_notifs(acc, limit, op_data=False):
+def _get_all_notifs(acc, limit, module, notif_code, op_data=False):
     if op_data:
         fields = Fields.Global.get_all_notifs(['payload'])
     else:
@@ -21,6 +21,10 @@ def _get_all_notifs(acc, limit, op_data=False):
         FROM gns.account_notifs
         WHERE account = '{acc}'
     """.replace("gns.", f"{config['schema']}.")
+    if module:
+        sql += f" AND module_name='{module}'"
+    if notif_code:
+        sql += f" AND notif_code='{notif_code}'"
     if limit:
         sql += f"LIMIT {limit}"
     res = db.select(sql, fields)
@@ -66,12 +70,16 @@ def account_preferences(account:str, module:str = None):
     return prefs or {}
 
 @router_core_accounts.get("/api/{account}/notifications", tags=['accounts'])
-async def account_notifications(account:str, limit:int=100, op_data:bool=False):
+async def account_notifications(account:str, module:str=None, notif_code:str=None, limit:int=100, op_data:bool=False):
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
     if not is_valid_hive_account(account.replace('@', '')):
         raise HTTPException(status_code=400, detail="invalid Hive account entered for")
-    notifs = _get_all_notifs(account.replace('@', ''), limit, op_data)
+    if module and module not in GnsStatus.get_module_list():
+        raise HTTPException(status_code=400, detail="the module is not valid or is unavailable at the moment")
+    if notif_code and len(notif_code) != 3:
+        raise HTTPException(status_code=400, detail="invalid notif_code entered, must be a 3 char value")
+    notifs = _get_all_notifs(account.replace('@', ''), limit, module, notif_code, op_data)
     return notifs or []
 
 @router_core_accounts.get("/api/{account}/unread", tags=['accounts'])
