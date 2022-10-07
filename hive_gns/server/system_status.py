@@ -25,7 +25,8 @@ def get_sys_status():
     return sync
 
 def get_app_data():
-    data = {
+    data = {}
+    data['categories'] = {
         "Social": {
             "Hive/HBD transfers": "core:trn",
             "Social": "core:vot"
@@ -34,4 +35,5 @@ def get_app_data():
             "DEC transfers": "splinterlands:trn"
         }
     }
+    data['available_modules'] = _modules = GnsStatus.get_module_list()
     return data
