@@ -129,11 +129,11 @@ class Haf:
     @classmethod
     def init(cls, db):
         """Initializes the HAF sync process."""
-        start = db.do('select', 'SELECT gns.global_sync_enabled()')[0]
+        cls._init_gns(db)
+        cls._cleanup(db)
+        cls._init_modules(db)
+        start = db.do('select', f"SELECT {config['schema']}.global_sync_enabled()")[0][0]
         if start is True:
-            cls._init_gns(db)
-            cls._cleanup(db)
-            cls._init_modules(db)
             print("Running state_preload script...")
             end_block = cls._get_haf_sync_head(db)[0] - 300
             db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
@@ -141,3 +141,4 @@ class Haf:
             Thread(target=cls._init_main_sync, args=(db_main,)).start()
         else:
             print("Global sync is disabled. Shutting down")
+            os._exit(0)
