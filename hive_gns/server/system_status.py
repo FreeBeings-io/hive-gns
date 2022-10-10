@@ -27,9 +27,11 @@ def get_sys_status():
 def get_app_data():
     data = {}
     data['categories'] = {
+        "Currency": {
+            "Hive/HBD transfers": "core:trn"
+        },
         "Social": {
-            "Hive/HBD transfers": "core:trn",
-            "Social": "core:vot"
+            "Votes": "core:vot"
         },
         "Splinterlands": {
             "DEC transfers": "splinterlands:trn"
