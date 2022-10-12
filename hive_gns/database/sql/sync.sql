@@ -18,10 +18,10 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 10;
+            _step := 100;
             _head_haf_block_num := hive.app_get_irreversible_block();
             RAISE NOTICE 'Found irreversible head haf block num: %s', _head_haf_block_num;
-            _global_start_block := _head_haf_block_num - (1 * 24 * 60 * 20);
+            _global_start_block := _head_haf_block_num - (7 * 24 * 60 * 20);
             RAISE NOTICE 'Global start block: %s', _head_haf_block_num;
             SELECT latest_block_num INTO _latest_block_num FROM gns.global_props;
 
