@@ -1,4 +1,5 @@
 """Top level account endpoints."""
+import json
 from fastapi import APIRouter, HTTPException
 
 from hive_gns.config import Config
@@ -125,11 +126,15 @@ async def account_notifications_category(account:str, category:str, limit:int=10
     return notifs or []
 
 @router_core_accounts.get("/api/{account}/notifications/custom", tags=['accounts'])
-async def account_notifications_custom(account:str, pairings:list, limit:int=100, op_data:bool=False):
+async def account_notifications_custom(account:str, pairings:str, limit:int=100, op_data:bool=False):
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
     if not is_valid_hive_account(account.replace('@', '')):
         raise HTTPException(status_code=400, detail="invalid Hive account entered for")
+    try:
+        pairings = json.loads(pairings)
+    except:
+        raise HTTPException(status_code=400, detail="the `pairings` param must be an array of `module:notif_code` pairings.")
     if not isinstance(pairings, list):
         raise HTTPException(status_code=400, detail="the `pairings` param must be an array of `module:notif_code` pairings.")
     if not _valid_pairings(pairings):
