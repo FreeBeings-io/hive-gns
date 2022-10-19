@@ -17,5 +17,6 @@ class Config:
         cls.config['server_port'] = os.environ.get('SERVER_PORT')
         cls.config['schema'] = os.environ.get('SCHEMA')
         cls.config['reset'] = os.environ.get('RESET')
+        cls.config['server_workers'] = os.environ.get('SERVER_WORKERS')
 
 Config.load_config()
