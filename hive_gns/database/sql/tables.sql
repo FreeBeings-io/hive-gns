@@ -49,5 +49,6 @@ CREATE TABLE IF NOT EXISTS gns.account_notifs(
     created TIMESTAMP NOT NULL,
     remark VARCHAR(500) NOT NULL,
     payload JSON NOT NULL,
+    link VARCHAR(500),
     verified BOOLEAN DEFAULT NULL
 );

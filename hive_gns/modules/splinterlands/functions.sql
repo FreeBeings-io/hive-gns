@@ -12,6 +12,7 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYT
             _op_id VARCHAR;
             _req_auths VARCHAR(16)[];
             _sub BOOLEAN;
+            _link VARCHAR(500);
         BEGIN
             -- check if subscribed
             _sub := gns.check_user_filter(_to, 'core', _notif_code);
@@ -29,6 +30,7 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYT
                     _token := (_body->'value'->>'json')::json->>'token';
 
                     _remark := FORMAT('you have received %s %s from %s', _qty, _token, _from);
+                    _link := FORMAT('https://hive.blog/@%s', _from);
 
                     -- check acount
                     INSERT INTO gns.accounts (account)
