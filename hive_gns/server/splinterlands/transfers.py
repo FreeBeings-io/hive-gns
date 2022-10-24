@@ -43,12 +43,12 @@ def _get_transfers(acc, limit, token=None, sender=None, min_amount=None, max_amo
         sql += f"AND created >= '{min_date}'"
     if max_date:
         sql += f"AND created <= '{max_date}'"
-    sql += f"ORDER BY created DESC LIMIT {limit}"
+    sql += f"ORDER BY id DESC LIMIT {limit}"
     res = db.select(sql, fields)
     return res
 
 @router_splinterlands_transfers.get("/api/{account}/splinterlands/transfers", tags=['splinterlands'])
-async def core_transfers(account:str, limit:int=100, currency:str=None, sender:str=None, min_amount:int=None, max_amount:int=None, min_date:str=None, max_date:str=None, op_data:bool=False):
+async def core_transfers(account:str, limit:int=MAX_LIMIT, currency:str=None, sender:str=None, min_amount:int=None, max_amount:int=None, min_date:str=None, max_date:str=None, op_data:bool=False):
     if limit and not isinstance(limit, int):
         raise HTTPException(status_code=400, detail="limit param must be an integer")
     if currency:

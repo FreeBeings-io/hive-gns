@@ -35,12 +35,12 @@ def _get_votes(acc, limit, min_date=None, max_date=None, op_data=False):
         sql += f"AND created >= '{min_date}'"
     if max_date:
         sql += f"AND created <= '{max_date}'"
-    sql += f"ORDER BY created DESC LIMIT {limit}"
+    sql += f"ORDER BY id DESC LIMIT {limit}"
     res = db.select(sql, fields)
     return res
 
 @router_core_votes.get("/api/{account}/core/votes", tags=['core'])
-async def core_votes(account:str, limit:int=100, min_date:str=None, max_date:str=None, op_data:bool=False):
+async def core_votes(account:str, limit:int=MAX_LIMIT, min_date:str=None, max_date:str=None, op_data:bool=False):
     if limit and not isinstance(limit, int):
         raise HTTPException(status_code=400, detail="limit param must be an integer")
     if '@' not in account:

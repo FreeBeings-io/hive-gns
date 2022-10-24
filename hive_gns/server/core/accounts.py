@@ -28,7 +28,7 @@ def _get_all_notifs(acc, limit, module, notif_code, op_data=False):
     if notif_code:
         sql += f" AND notif_code='{notif_code}'"
     if limit:
-        sql += f"LIMIT {limit}"
+        sql += f"ORDER BY id DESC LIMIT {limit}"
     res = db.select(sql, fields)
     return res
 
@@ -50,7 +50,7 @@ def _get_all_notifs_custom(acc, limit, pairings, op_data=False):
     _tmp_sql = " OR ".join(_pairs_sql)
     sql += f"{_tmp_sql}) "
     if limit:
-        sql += f"LIMIT {limit}"
+        sql += f"ORDER BY id DESC LIMIT {limit}"
     res = db.select(sql, fields)
     return res
 
@@ -97,7 +97,7 @@ def account_preferences(account:str, module:str = None):
     return prefs or {}
 
 @router_core_accounts.get("/api/{account}/notifications", tags=['accounts'])
-async def account_notifications(account:str, module:str=None, notif_code:str=None, limit:int=100, op_data:bool=False):
+async def account_notifications(account:str, module:str=None, notif_code:str=None, limit:int=MAX_LIMIT, op_data:bool=False):
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
     if not is_valid_hive_account(account.replace('@', '')):
@@ -113,7 +113,7 @@ async def account_notifications(account:str, module:str=None, notif_code:str=Non
     return notifs or []
 
 @router_core_accounts.get("/api/{account}/notifications/category", tags=['accounts'])
-async def account_notifications_category(account:str, category:str, limit:int=100, op_data:bool=False):
+async def account_notifications_category(account:str, category:str, limit:int=MAX_LIMIT, op_data:bool=False):
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
     if not is_valid_hive_account(account.replace('@', '')):
@@ -132,7 +132,7 @@ async def account_notifications_category(account:str, category:str, limit:int=10
     return notifs or []
 
 @router_core_accounts.get("/api/{account}/notifications/custom", tags=['accounts'])
-async def account_notifications_custom(account:str, pairings:str, limit:int=100, op_data:bool=False):
+async def account_notifications_custom(account:str, pairings:str, limit:int=MAX_LIMIT, op_data:bool=False):
     if '@' not in account:
         raise HTTPException(status_code=400, detail="missing '@' in account")
     if not is_valid_hive_account(account.replace('@', '')):
