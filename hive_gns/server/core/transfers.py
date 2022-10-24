@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from hive_gns.config import Config
 from hive_gns.database.access import db
 from hive_gns.server.fields import Fields
-from hive_gns.tools import NAI_MAP, is_valid_hive_account
+from hive_gns.tools import MAX_LIMIT, NAI_MAP, is_valid_hive_account
 
 MODULE_NAME = 'core'
 NOTIF_CODE = 'trn'
@@ -72,5 +72,7 @@ async def core_transfers(account:str, limit:int=100, currency:str=None, sender:s
     if max_date:
         max_date = max_date.replace('T', ' ')
 
+    if limit > MAX_LIMIT:
+        limit = MAX_LIMIT
     notifs = _get_transfers(account.replace('@', ''), limit, currency, sender, min_amount, max_amount, min_date, max_date, op_data)
     return notifs or []
