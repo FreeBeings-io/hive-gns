@@ -52,3 +52,13 @@ CREATE TABLE IF NOT EXISTS gns.account_notifs(
     link VARCHAR(500),
     verified BOOLEAN DEFAULT NULL
 );
+
+CREATE INDEX IF NOT EXISTS idx_gns_acc_notifs_acc
+    ON gns.account_notifs (account);
+
+CREATE INDEX IF NOT EXISTS idx_gns_acc_notifs_module
+    ON gns.account_notifs (module_name);
+
+CREATE INDEX IF NOT EXISTS idx_gns_acc_notifs_notif_code
+    ON gns.account_notifs (notif_code);
+
