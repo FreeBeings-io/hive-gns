@@ -7,7 +7,7 @@ from hive_gns.database.access import db
 from hive_gns.engine.gns_sys import GnsStatus
 from hive_gns.server import system_status
 from hive_gns.server.fields import Fields
-from hive_gns.tools import is_valid_hive_account
+from hive_gns.tools import MAX_LIMIT, is_valid_hive_account
 
 config = Config.config
 router_core_accounts = APIRouter()
@@ -106,6 +106,9 @@ async def account_notifications(account:str, module:str=None, notif_code:str=Non
         raise HTTPException(status_code=400, detail="the module is not valid or is unavailable at the moment")
     if notif_code and len(notif_code) != 3:
         raise HTTPException(status_code=400, detail="invalid notif_code entered, must be a 3 char value")
+
+    if limit > MAX_LIMIT:
+        limit = MAX_LIMIT
     notifs = _get_all_notifs(account.replace('@', ''), limit, module, notif_code, op_data)
     return notifs or []
 
@@ -122,6 +125,9 @@ async def account_notifications_category(account:str, category:str, limit:int=10
     _pairs = []
     for pair in app_data['categories'][category]:
         _pairs.append(app_data['categories'][category][pair])
+    
+    if limit > MAX_LIMIT:
+        limit = MAX_LIMIT
     notifs = _get_all_notifs_custom(account.replace('@', ''), limit, _pairs, op_data)
     return notifs or []
 
@@ -139,6 +145,9 @@ async def account_notifications_custom(account:str, pairings:str, limit:int=100,
         raise HTTPException(status_code=400, detail="the `pairings` param must be an array of `module:notif_code` pairings.")
     if not _valid_pairings(pairings):
         raise HTTPException(status_code=400, detail="invalid `pairings` entered. Please enter an array of `module:notif_code` pairings.")
+    
+    if limit > MAX_LIMIT:
+        limit = MAX_LIMIT
     notifs = _get_all_notifs_custom(account.replace('@', ''), limit, pairings, op_data)
     return notifs or []
 
