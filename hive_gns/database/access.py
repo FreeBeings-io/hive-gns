@@ -42,6 +42,14 @@ class DbAccess:
             return True
         except:
             return False
+    
+    def execute(self, sql):
+        try:
+            self._write_db.do('execute', sql)
+            self._write_db.do('commit')
+            return True
+        except:
+            return False
 
     def delete(self, sql:str):
         try:
