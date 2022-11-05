@@ -103,7 +103,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
             _author VARCHAR(16);
             _permlink VARCHAR(500);
             _pending_payout JSON;
-            _value FLOAT;
+            _value NUMERIC(10,2);
             _remark VARCHAR(500);
             _sub BOOLEAN;
             _link VARCHAR(500);
@@ -127,7 +127,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
             IF _weight = 0 OR _tot_weight = 0 OR _amount = 0 THEN
                 _value = 0;
             ELSE
-                _value := (( _weight / _tot_weight)::float * _amount)::float / 1000;
+                _value := (( _weight::float / _tot_weight::float) * _amount::float)::float / 1000;
             END IF;
             -- RAISE NOTICE 'value: % \n', _value;
 
