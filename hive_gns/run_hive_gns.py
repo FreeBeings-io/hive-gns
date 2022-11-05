@@ -3,6 +3,7 @@ import time
 
 from hive_gns.config import Config
 from hive_gns.database.core import DbSession
+from hive_gns.engine.pruner import Pruner
 from hive_gns.server.serve import run_server
 from hive_gns.database.haf import Haf
 
@@ -16,6 +17,7 @@ def run():
         print("---   Global Notification System (Hive Blockchain) started   ---")
         time.sleep(3)
         Haf.init(db)
+        Pruner.run_pruner()
         time.sleep(6)
         run_server()
     except KeyboardInterrupt:

@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from hive_gns.config import Config
+from hive_gns.engine.gns_sys import GnsStatus
 from hive_gns.server import system_status
 from hive_gns.server.api_metadata import TITLE, DESCRIPTION, VERSION, CONTACT, LICENSE, TAGS_METADATA
 from hive_gns.server.core.transfers import router_core_transfers
@@ -12,7 +13,6 @@ from hive_gns.server.core.votes import router_core_votes
 from hive_gns.server.splinterlands.transfers import router_splinterlands_transfers
 from hive_gns.server.core.accounts import router_core_accounts
 from hive_gns.tools import normalize_types, UTC_TIMESTAMP_FORMAT
-from hive_gns.engine.hive import make_request
 
 config = Config.config
 
@@ -47,7 +47,7 @@ async def root():
             'system': normalize_types(system_status.get_sys_status()),
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
-        head = make_request('condenser_api.get_dynamic_global_properties')['head_block_number']
+        head = GnsStatus.get_haf_head()
         sys_head = report['system']['block_num'] or 0
 
         diff = head - sys_head
