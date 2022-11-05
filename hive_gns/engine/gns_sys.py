@@ -31,6 +31,12 @@ class GnsOps:
         return res
 
 class GnsStatus:
+
+    @classmethod
+    def get_haf_head(cls):
+        sql = "SELECT hive.app_get_irreversible_block();"
+        res = db.select(sql, ['head_block'])
+        return res[0]['head_block']
     
     @classmethod
     def get_global_latest_state(cls):
