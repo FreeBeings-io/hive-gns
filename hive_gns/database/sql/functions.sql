@@ -52,13 +52,23 @@ CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.prune()
+CREATE OR REPLACE FUNCTION gns.prune_haf()
+    RETURNS void
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        BEGIN
+            DELETE FROM hive.blocks
+            WHERE num <= (hive.app_get_irreversible_block() - (30 * 24 * 60 * 20));
+        END;
+    $function$;
+
+CREATE OR REPLACE FUNCTION gns.prune_gns()
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
         BEGIN
             DELETE FROM gns.ops
-            WHERE created <= NOW() - INTERVAL '30 DAYS';
+            WHERE block_num <= (hive.app_get_irreversible_block() - (30 * 24 * 60 * 20));
         END;
     $function$;
 
