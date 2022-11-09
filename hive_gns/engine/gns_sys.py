@@ -78,14 +78,3 @@ class GnsStatus:
     def get_module_latest_gns_op_id(cls, module):
         state = cls.get_module_latest_state(module)
         return state['latest_gns_op_id']
-    
-    @classmethod
-    def set_module_state(cls, module, latest_gns_op_id):
-        sql = f"""
-            UPDATE gns.module_state
-            SET latest_gns_op_id = {latest_gns_op_id}
-            WHERE module = '{module}';
-        """.replace("gns.", f"{config['schema']}.")
-        done = db.write(sql)
-        if done == False:
-            print(f"Failed to update state for '{module}' module. {latest_gns_op_id}")  #TODO: send to logging module
