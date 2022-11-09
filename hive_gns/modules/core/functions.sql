@@ -139,7 +139,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
             -- check if subscribed
             _sub := gns.check_user_filter(_author, 'core', _notif_code);
 
-            IF _sub = true THEN
+            IF _sub = true AND _value > 0.01 THEN
 
                 _remark := FORMAT('%s voted on your post ($%s)', _voter, _value);
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
