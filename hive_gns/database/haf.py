@@ -11,7 +11,6 @@ from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
 START_DAYS_DISTANCE = 1
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
 
-
 config = Config.config
 
 

@@ -1,4 +1,5 @@
 import os
+
 import psycopg2
 
 from hive_gns.config import Config
@@ -52,7 +53,7 @@ class DbSession:
                     raise Exception(f"Invalid query type passed: {query_type}")
             except psycopg2.OperationalError as err:
                 if "connection" in err.args[0] and "closed" in err.args[0]:
-                    print(f"Connection lost. Reconnecting...")
+                    print("Connection lost. Reconnecting...")
                     self.new_conn()
                 else:
                     print(err)
