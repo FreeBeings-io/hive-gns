@@ -55,6 +55,7 @@ def _get_all_notifs_custom(acc, limit, pairings, op_data=False):
     return res
 
 def _valid_pairings(pairs):
+    # TODO
     return True
 
 def _get_unread_count(acc):
