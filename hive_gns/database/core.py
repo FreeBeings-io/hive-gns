@@ -56,7 +56,7 @@ class DbSession:
                 self.new_conn()
                 return self._process(query_type=query_type, sql=sql, data=data)
             else:
-                raise Exception(err)
+                os._exit(1)
 
     def _select(self, sql):
         cur = self.conn.cursor()
