@@ -60,8 +60,8 @@ To reset the database, set the `RESET` variable to true.
 
 **Social Interactions:**
 
-- [ ] Votes
-- [ ] Comments
+- [x] Votes
+- [x] Comments
 - [ ] Reblogs
 - [ ] Follows
 - [ ] Unfollows

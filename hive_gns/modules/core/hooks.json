@@ -17,5 +17,11 @@
         "function": "gns.core_vote",
         "notif_code": "vot",
         "filter": {}
+    },
+    "comment": {
+        "op_id": 1,
+        "function": "gns.core_comment",
+        "notif_code": "com",
+        "filter": {}
     }
 }
