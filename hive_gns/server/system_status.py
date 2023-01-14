@@ -31,7 +31,8 @@ def get_app_data():
             "Hive/HBD transfers": "core:trn"
         },
         "Social": {
-            "Votes": "core:vot"
+            "Votes": "core:vot",
+            "Comments": "core:com"
         },
         "Splinterlands": {
             "DEC transfers": "splinterlands:trn"
