@@ -38,5 +38,5 @@ def get_app_data():
             "DEC transfers": "splinterlands:trn"
         }
     }
-    data['available_modules'] = _modules = GnsStatus.get_module_list()
+    data['available_modules'] = GnsStatus.get_module_list()
     return data
