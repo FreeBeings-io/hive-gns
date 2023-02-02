@@ -32,7 +32,8 @@ def get_app_data():
         },
         "Social": {
             "Votes": "core:vot",
-            "Comments": "core:com"
+            "Comments": "core:com",
+            "Delegations": "core:del"
         },
         "Splinterlands": {
             "DEC transfers": "splinterlands:trn"
