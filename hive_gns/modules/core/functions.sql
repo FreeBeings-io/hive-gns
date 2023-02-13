@@ -193,7 +193,7 @@ CREATE OR REPLACE FUNCTION gns.core_comment( _gns_op_id BIGINT, _trx_id BYTEA, _
                 IF _sub = true THEN
 
                     _remark := FORMAT('%s commented on your post', _parent_author);
-                    _link := FORMAT('https://hive.blog/@%s/%s', _parent_author, _parent_permlink);
+                    _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
 
                     -- make notification entry
                     INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
@@ -253,6 +253,72 @@ CREATE OR REPLACE FUNCTION gns.core_deleg( _gns_op_id BIGINT, _trx_id BYTEA, _cr
             END IF;
 
             -- RAISE NOTICE 'value: % \n', _value;
+
+        EXCEPTION WHEN OTHERS THEN
+                RAISE NOTICE E'Got exception:
+                SQLSTATE: % 
+                SQLERRM: %
+                DATA: %', SQLSTATE, SQLERRM, _body;
+        END;
+        $function$;
+
+CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+    RETURNS void
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        DECLARE
+            _parent_author VARCHAR(16);
+            _parent_permlink VARCHAR(500);
+            _author VARCHAR(16);
+            _permlink VARCHAR(500);
+            _post_body TEXT;
+
+            _username VARCHAR(16);
+            _remark VARCHAR(500);
+            _sub BOOLEAN;
+            _link VARCHAR(500);
+
+        BEGIN
+            _parent_author := _body->'value'->>'parent_author';
+            _parent_permlink := _body->'value'->>'parent_permlink';
+            _author := _body->'value'->>'author';
+            _permlink := _body->'value'->>'permlink';
+            _post_body := _body->'value'->>'body';
+
+            IF length(_parent_author) > 0 AND length(_parent_permlink) > 0 THEN
+                -- this is a post mention
+                _type := 'post';
+                _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
+            ELSE
+                -- this is a comment mention
+                _type := 'comment';
+                _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
+            END IF;
+
+            -- check if body contains @username of max 16 characters, extract username if found then check if subscribed
+            IF _post_body ~ '@[a-z0-9-]{1,16}' THEN
+                FOR _username IN SELECT regexp_matches(_post_body, '@[a-z0-9-]{1,16}', 'g') LOOP
+                    _username := _username[1];
+                    _username := substring(_username, 2, length(_username));
+
+                    -- check user account
+                    INSERT INTO gns.accounts (account)
+                    SELECT _username
+                    WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _username);
+
+                    -- check if subscribed
+                    _sub := gns.check_user_filter(_username, 'core', _notif_code);
+
+                    IF _sub = true THEN
+
+                        _remark := FORMAT('%s mentioned you in a %s', _author, _type);
+
+                        -- make notification entry
+                        INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
+                        VALUES (_gns_op_id, _trx_id, _username, 'core', _notif_code, _created, _remark, _body, true, _link);
+                    END IF;
+                END LOOP;
+            END IF;
 
         EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE E'Got exception:

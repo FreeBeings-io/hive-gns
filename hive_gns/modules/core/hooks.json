@@ -29,5 +29,11 @@
         "function": "gns.core_deleg",
         "notif_code": "del",
         "filter": {}
+    },
+    "mention": {
+        "op_id": 1,
+        "function": "gns.core_mention",
+        "notif_code": "com",
+        "filter": {}
     }
 }
