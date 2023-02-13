@@ -272,6 +272,7 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
             _author VARCHAR(16);
             _permlink VARCHAR(500);
             _post_body TEXT;
+            _type VARCHAR(10);
 
             _username VARCHAR(16);
             _remark VARCHAR(500);
