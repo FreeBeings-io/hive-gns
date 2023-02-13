@@ -274,7 +274,7 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
             _post_body TEXT;
             _type VARCHAR(10);
 
-            _username VARCHAR(16);
+            _username VARCHAR(16)[];
             _remark VARCHAR(500);
             _sub BOOLEAN;
             _link VARCHAR(500);
@@ -296,35 +296,36 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
             END IF;
 
-            -- check if body contains @username of max 16 characters, extract username if found then check if subscribed
-            IF _post_body ~ '@[a-z0-9-]{1,16}' THEN
-                FOR _username IN SELECT regexp_matches(_post_body, '@[a-z0-9-]{1,16}', 'g') LOOP
-                    _username := _username[1];
-                    _username := substring(_username, 2, length(_username));
+            -- check if body contains @username of max 16 characters
+            -- using regex letters, numbers and dash
+            -- extract username (without the @ character) from body if found then
+                -- check user account
+                -- check if subscribed
+                -- make notification entry, for each username found
+            FOR _username IN SELECT regexp_matches(_post_body, '@([a-zA-Z0-9-]{1,16})', 'g') LOOP
+                -- check user account
+                INSERT INTO gns.accounts (account)
+                SELECT _username[1]
+                WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _username[1]);
 
-                    -- check user account
-                    INSERT INTO gns.accounts (account)
-                    SELECT _username
-                    WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _username);
+                -- check if subscribed
+                _sub := gns.check_user_filter(_username[1], 'core', _notif_code);
 
-                    -- check if subscribed
-                    _sub := gns.check_user_filter(_username, 'core', _notif_code);
+                IF _sub = true THEN
 
-                    IF _sub = true THEN
+                    _remark := FORMAT('%s mentioned you in a %s', _author, _type);
 
-                        _remark := FORMAT('%s mentioned you in a %s', _author, _type);
-
-                        -- make notification entry
-                        INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                        VALUES (_gns_op_id, _trx_id, _username, 'core', _notif_code, _created, _remark, _body, true, _link);
-                    END IF;
-                END LOOP;
-            END IF;
+                    -- make notification entry
+                    INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
+                    VALUES (_gns_op_id, _trx_id, _username[1], 'core', _notif_code, _created, _remark, _body, true, _link);
+                END IF;
+            END LOOP;
 
         EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE E'Got exception:
                 SQLSTATE: % 
                 SQLERRM: %
-                DATA: %', SQLSTATE, SQLERRM, _body;
+                DATA: %
+                USERNAME: %', SQLSTATE, SQLERRM, _body, _username;
         END;
         $function$;

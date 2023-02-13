@@ -73,7 +73,7 @@ To reset the database, set the `RESET` variable to true.
 - [ ] Reblogs
 - [ ] Follows
 - [ ] Unfollows
-- [ ] Mentions
+- [x] Mentions
 
 **Comunities (WIP):**
 
