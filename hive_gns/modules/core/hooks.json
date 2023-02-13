@@ -33,7 +33,7 @@
     "mention": {
         "op_id": 1,
         "function": "gns.core_mention",
-        "notif_code": "com",
+        "notif_code": "men",
         "filter": {}
     }
 }
