@@ -293,7 +293,7 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
             ELSE
                 -- this is a comment mention
                 _type := 'comment';
-                _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
+                _link := FORMAT('https://hive.blog/@%s/%s#@%s/%s', _parent_author, _parent_permlink, _author, _permlink);
             END IF;
 
             -- check if body contains @username of max 16 characters
