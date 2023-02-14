@@ -303,6 +303,10 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
                 -- check if subscribed
                 -- make notification entry, for each username found
             FOR _username IN SELECT DISTINCT regexp_matches(_post_body, '@([a-zA-Z0-9-]{1,16})', 'g') LOOP
+                IF _username[1] = _author THEN
+                    -- skip if username is the same as the author
+                    CONTINUE;
+                END IF;
                 -- check user account
                 INSERT INTO gns.accounts (account)
                 SELECT _username[1]
