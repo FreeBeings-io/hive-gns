@@ -84,9 +84,12 @@ class Haf:
         cls.module_list = [f.name for f in os.scandir(working_dir) if cls._is_valid_module(f.name)]
         for module in cls.module_list:
             hooks = json.loads(open(f'{working_dir}/{module}/hooks.json', 'r', encoding='UTF-8').read().replace('gns.', f"{config['schema']}."))
-            functions = open(f'{working_dir}/{module}/functions.sql', 'r', encoding='UTF-8').read().replace('gns.', f"{config['schema']}.")
             cls._check_hooks(db, module, hooks)
-            cls._update_functions(db, functions)
+            # loop through all .sql files found in module, subfolder /notifs, then update functions on each
+            for _file in os.listdir(f'{working_dir}/{module}/notifs'):
+                if _file.endswith('.sql'):
+                    _sql = open(f'{working_dir}/{module}/notifs/{_file}', 'r', encoding='UTF-8').read().replace('gns.', f"{config['schema']}.")
+                    cls._update_functions(db, _sql)
             AvailableModules.add_module(module, Module(db, module, hooks))
 
     @classmethod

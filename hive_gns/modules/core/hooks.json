@@ -35,5 +35,11 @@
         "function": "gns.core_mention",
         "notif_code": "men",
         "filter": {}
+    },
+    "author_reward": {
+        "op_id": 51,
+        "function": "gns.core_author_reward",
+        "notif_code": "arw",
+        "filter": {}
     }
 }
