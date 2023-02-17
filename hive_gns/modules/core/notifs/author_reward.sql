@@ -1,4 +1,3 @@
--- notification for when rewards are paid to an author
 CREATE OR REPLACE FUNCTION gns.core_author_reward( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
@@ -6,7 +5,6 @@ CREATE OR REPLACE FUNCTION gns.core_author_reward( _gns_op_id BIGINT, _trx_id BY
         DECLARE
             _author VARCHAR(16);
             _permlink VARCHAR(500);
-            _title VARCHAR;
             _hbd_payout DOUBLE PRECISION;
             _hive_payout DOUBLE PRECISION;
             _vesting_payout DOUBLE PRECISION;
