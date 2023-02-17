@@ -55,7 +55,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 tv.trx_hash,
                                 ov.body::json
                             FROM hive.operations_view ov
-                            JOIN hive.transactions_view tv
+                            LEFT JOIN hive.transactions_view tv
                                 ON tv.block_num = ov.block_num
                                 AND tv.trx_in_block = ov.trx_in_block
                             WHERE ov.block_num >= _first_block
