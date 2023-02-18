@@ -41,5 +41,17 @@
         "function": "gns.core_author_reward",
         "notif_code": "arw",
         "filter": {}
+    },
+    "curation_reward": {
+        "op_id": 52,
+        "function": "gns.core_curation_reward",
+        "notif_code": "crw",
+        "filter": {}
+    },
+    "comment_benefactor_reward": {
+        "op_id": 63,
+        "function": "gns.core_comment_benefactor_reward",
+        "notif_code": "brw",
+        "filter": {}
     }
 }

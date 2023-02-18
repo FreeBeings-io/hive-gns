@@ -57,9 +57,9 @@ To reset the database, set the `RESET` variable to true.
 - [ ] Vest withdrawals
 - [x] Delegations received
 - [x] Delegations removed
-- [ ] Author reward
-- [ ] Curation reward
-- [ ] Comment benefactor reward
+- [x] Author reward
+- [x] Curation reward
+- [x] Comment benefactor reward
 - [ ] Filled conversion request
 - [ ] Filled order
 - [ ] Recurrent transfer
