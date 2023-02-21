@@ -20,7 +20,7 @@ CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _gns_op_id BIGINT, _tr
             IF _sub = true THEN
                 _amount_in := ((_body->'value'->>'amount_in')::json->>'amount')::float / 1000;
                 _amount_out := ((_body->'value'->>'amount_out')::json->>'amount')::float / 1000;
-                IF _amount_in::json->>'nai' = '@@000000013' THEN
+                IF (_body->'value'->>'amount_in')::json->>'nai' = '@@000000013' THEN
                     _remark := FORMAT('Successfully converted %s HIVE to %s HBD', _amount_in, _amount_out);
                 ELSE
                     _remark := FORMAT('Successfully converted %s HBD to %s HIVE', _amount_in, _amount_out);
