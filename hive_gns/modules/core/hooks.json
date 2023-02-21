@@ -53,5 +53,11 @@
         "function": "gns.core_comment_benefactor_reward",
         "notif_code": "brw",
         "filter": {}
+    },
+    "fill_convert_request": {
+        "op_id": 50,
+        "function": "gns.core_fill_convert_request",
+        "notif_code": "fcr",
+        "filter": {}
     }
 }
