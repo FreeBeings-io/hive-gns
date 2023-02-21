@@ -4,8 +4,8 @@ CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _gns_op_id BIGINT, _tr
     VOLATILE AS $function$
         DECLARE
             _account VARCHAR(16);
-            _amount_in BIGINT;
-            _amount_out BIGINT;
+            _amount_in FLOAT;
+            _amount_out FLOAT;
             _sub BOOLEAN;
             _link VARCHAR(500);
             _remark VARCHAR(500);
