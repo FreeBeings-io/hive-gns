@@ -25,15 +25,21 @@ def get_sys_status():
     return sync
 
 def get_app_data():
+    """Populate categories with all available module:notif_code pairings."""
     data = {}
     data['categories'] = {
         "Currency": {
-            "Hive/HBD transfers": "core:trn"
+            "Hive/HBD transfers": "core:trn",
+            "Delegations": "core:del",
+            "Author Rewards": "core:arw",
+            "Curation Rewards": "core:crw",
+            "Comment Benefactor Rewards": "core:brw",
+            "Fill Convert Request": "core:fcr",
         },
         "Social": {
             "Votes": "core:vot",
             "Comments": "core:com",
-            "Delegations": "core:del"
+            "Mentions": "core:men"
         },
         "Splinterlands": {
             "DEC transfers": "splinterlands:trn"
