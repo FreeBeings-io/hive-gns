@@ -33,7 +33,7 @@ CREATE OR REPLACE PROCEDURE gns.load_state(_first_block INTEGER, _last_block INT
                     WHERE gnsov.block_num >= _first_block
                         AND gnsov.block_num <= _last_block
                         AND gnsov.op_type_id = 18
-                        AND gnsov.body::json->'value'->>'id' = 'gns'
+                        AND gnsov.body::varchar::json->'value'->>'id' = 'gns'
                     ORDER BY gnsov.block_num, trx_in_block, gnsov.id
                 LOOP
                     _hive_opid := temprow.hive_opid;

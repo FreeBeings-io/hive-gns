@@ -53,7 +53,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 ov.timestamp,
                                 ov.trx_in_block,
                                 tv.trx_hash,
-                                ov.body::json
+                                ov.body::varchar::json
                             FROM hive.operations_view ov
                             LEFT JOIN hive.transactions_view tv
                                 ON tv.block_num = ov.block_num
@@ -116,7 +116,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
                     block_num,
                     created,
                     transaction_id,
-                    body::json
+                    body::varchar::json
                 FROM gns.ops
                 WHERE id > _latest_gns_op
                     AND op_type_id = ANY (_op_ids)
