@@ -18,7 +18,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 100;
+            _step := 1000;
             _head_haf_block_num := hive.app_get_irreversible_block();
             RAISE NOTICE 'Found irreversible head haf block num: %s', _head_haf_block_num;
             _global_start_block := _head_haf_block_num - (1 * 24 * 60 * 20);
