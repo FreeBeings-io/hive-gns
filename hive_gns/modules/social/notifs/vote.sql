@@ -42,7 +42,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
             WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _author);
 
             -- check if subscribed
-            _sub := gns.check_user_filter(_author, 'core', _notif_code);
+            _sub := gns.check_user_filter(_author, 'social', _notif_code);
 
             IF _sub = true AND _value > 0.01 THEN
 
@@ -51,7 +51,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _gns_op_id BIGINT, _trx_id BYTEA, _cre
 
                 -- make notification entry
                 INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _author, 'core', _notif_code, _created, _remark, _body, true, _link);
+                VALUES (_gns_op_id, _trx_id, _author, 'social', _notif_code, _created, _remark, _body, true, _link);
             END IF;
         EXCEPTION WHEN OTHERS THEN
                 RAISE NOTICE E'Got exception:

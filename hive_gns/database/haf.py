@@ -36,12 +36,13 @@ class Haf:
     @classmethod
     def _check_hooks(cls, db, module, hooks):
         enabled = hooks['enabled']
+        category = hooks['module_category']
         has_entry = db.do('select_exists', f"SELECT module FROM {config['schema']}.module_state WHERE module='{module}'")
         if has_entry is False:
             db.do('execute',
                 f"""
-                    INSERT INTO {config['schema']}.module_state (module, enabled)
-                    VALUES ('{module}', '{enabled}');
+                    INSERT INTO {config['schema']}.module_state (module, enabled, module_category)
+                    VALUES ('{module}', '{enabled}', '{category}');
                 """)
         else:
             db.do('execute',
@@ -50,11 +51,13 @@ class Haf:
                     WHERE module = '{module}';
                 """)
         del hooks['enabled']
+        del hooks['module_category']
         # update module hooks table
         for notif_name in hooks:
             _notif_code = hooks[notif_name]['notif_code']
             _funct = hooks[notif_name]['function']
             _op_id = int(hooks[notif_name]['op_id'])
+            _description = hooks[notif_name]['description']
             _filter = json.dumps(hooks[notif_name]['filter'])
             has_hooks_entry = db.do('select_exists',
                 f"""
@@ -65,8 +68,8 @@ class Haf:
             if has_hooks_entry is False:
                 db.do('execute',
                     f"""
-                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter)
-                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}');
+                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter, description)
+                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}', '{_description}');
                     """
                 )
             else:
@@ -74,7 +77,7 @@ class Haf:
                     f"""
                         UPDATE {config['schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
-                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}';
+                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}', description = '{_description}';
                     """
                 )
 
@@ -95,7 +98,7 @@ class Haf:
     @classmethod
     def _init_gns(cls, db):
         db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
-        for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql']:
+        for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql', 'validation.sql']:
             _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
                 .replace('gns.', f"{config['schema']}.")
             )

@@ -1,7 +1,9 @@
 {
     "enabled": true,
+    "module_category": "Splinterlands",
     "sm_token_transfer": {
         "op_id": 18,
+        "description": "DEC transfers",
         "function": "gns.sm_token_transfer",
         "notif_code": "trn",
         "filter": {"id":"sm_token_transfer"}

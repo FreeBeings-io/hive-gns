@@ -110,3 +110,27 @@ CREATE OR REPLACE FUNCTION gns.terminate_main_sync(app_desc VARCHAR)
             END IF;
         END;
     $function$;
+
+CREATE OR REPLACE FUNCTION gns.app_get_all_modules_data()
+    RETURNS JSONB
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        DECLARE
+            _result JSONB;
+            _module VARCHAR;
+            _description VARCHAR;
+            _category VARCHAR;
+        BEGIN
+            _result := jsonb_build_object();
+            FOR _module IN SELECT DISTINCT module
+            FROM gns.module_hooks
+            LOOP
+                _result := _result || jsonb_build_object(_module, (SELECT json_agg(mod.details) FROM (
+                    SELECT json_build_array(gms.module_category, gmh.description, gmh.module, gmh.notif_code) details
+                    FROM gns.module_hooks gmh
+                    JOIN gns.module_state gms ON gms.module = gmh.module
+                    WHERE gmh.module=_module) mod));
+            END LOOP;
+            RETURN _result;
+        END;
+    $function$;

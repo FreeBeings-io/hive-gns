@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYT
             _link VARCHAR(500);
         BEGIN
             -- check if subscribed
-            _sub := gns.check_user_filter(_to, 'core', _notif_code);
+            _sub := gns.check_user_filter(_to, 'splinterlands', _notif_code);
 
             IF _sub = true THEN
                 _op_id := _body->'value'->>'id';

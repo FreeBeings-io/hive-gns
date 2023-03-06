@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS gns.ops(
 
 CREATE TABLE IF NOT EXISTS gns.module_state(
     module VARCHAR(64) PRIMARY KEY,
+    module_category VARCHAR(64) NOT NULL,
     latest_gns_op_id BIGINT DEFAULT 0,
     latest_block_num BIGINT DEFAULT 0,
     check_in TIMESTAMP,
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
     module VARCHAR(64) NOT NULL REFERENCES gns.module_state(module),
     notif_name VARCHAR(128) NOT NULL,
     notif_code VARCHAR(3) NOT NULL,
+    description VARCHAR(500) NOT NULL,
     funct VARCHAR(128) NOT NULL,
     op_id SMALLINT NOT NULL,
     notif_filter JSON NOT NULL
@@ -34,7 +36,7 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
 CREATE TABLE IF NOT EXISTS gns.accounts(
     account VARCHAR(16) PRIMARY KEY,
     last_reads JSON DEFAULT FORMAT('{"all": "%s"}', timezone('UTC', now()) - '30 days'::interval)::json,
-    prefs JSON DEFAULT '{}'::json,
+    prefs JSON DEFAULT '{"enabled":{"currency":["*"],"social":["*"]}}'::json,
     prefs_updated TIMESTAMP,
     prefs_flag BOOLEAN DEFAULT false
 );

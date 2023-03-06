@@ -16,7 +16,7 @@ CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _gns_op_id BIGINT, _tr
             SELECT _account
             WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _account);
             -- check if subscribed
-            _sub := gns.check_user_filter(_account, 'core', _notif_code);
+            _sub := gns.check_user_filter(_account, 'currency', _notif_code);
             IF _sub = true THEN
                 _amount_in := ((_body->'value'->>'amount_in')::json->>'amount')::float / 1000;
                 _amount_out := ((_body->'value'->>'amount_out')::json->>'amount')::float / 1000;
@@ -28,7 +28,7 @@ CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _gns_op_id BIGINT, _tr
                 _link := FORMAT('https://hive.blog/@%s', _account);
                 -- make notification entry
                 INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _account, 'core', _notif_code, _created, _remark, _body, true, _link);
+                VALUES (_gns_op_id, _trx_id, _account, 'currency', _notif_code, _created, _remark, _body, true, _link);
             END IF;
         EXCEPTION WHEN OTHERS THEN
             RAISE NOTICE E'Got exception:

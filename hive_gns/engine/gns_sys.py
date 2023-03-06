@@ -33,6 +33,12 @@ class GnsOps:
 class GnsStatus:
 
     @classmethod
+    def get_all_modules_data(cls):
+        sql = "SELECT gns.app_get_all_modules_data();".replace("gns.", f"{config['schema']}.")
+        res = db.select(sql, ['modules_data'])
+        return res[0]['modules_data']
+
+    @classmethod
     def get_haf_head(cls):
         sql = "SELECT hive.app_get_irreversible_block();"
         res = db.select(sql, ['head_block'])

@@ -26,24 +26,22 @@ def get_sys_status():
 
 def get_app_data():
     """Populate categories with all available module:notif_code pairings."""
+    _data = GnsStatus.get_all_modules_data()
+    # for each entry in data,
+    # take first element of list then
+        # for each element in resulting list
+        # use the first element as the key
+        # use the second, third and fourth elements as the value
+    # return data
     data = {}
-    data['categories'] = {
-        "Currency": {
-            "Hive/HBD transfers": "core:trn",
-            "Delegations": "core:del",
-            "Author Rewards": "core:arw",
-            "Curation Rewards": "core:crw",
-            "Comment Benefactor Rewards": "core:brw",
-            "Fill Convert Request": "core:fcr",
-        },
-        "Social": {
-            "Votes": "core:vot",
-            "Comments": "core:com",
-            "Mentions": "core:men"
-        },
-        "Splinterlands": {
-            "DEC transfers": "splinterlands:trn"
-        }
-    }
-    data['available_modules'] = GnsStatus.get_module_list()
+    for module in _data:
+        entries = _data[module]
+        for notif in entries:
+            category = notif[0]
+            notif_desc = notif[1]
+            module = notif[2]
+            notif_code = notif[3]
+            if category not in data:
+                data[category] = {}
+            data[category] |= {notif_desc: f"{module}:{notif_code}"}
     return data

@@ -1,63 +1,11 @@
 {
     "enabled": true,
-    "core_transfer": {
-        "op_id": 2,
-        "function": "gns.core_transfer",
-        "notif_code": "trn",
-        "filter": {}
-    },
+    "module_category": "Social",
     "gns": {
         "op_id": 18,
+        "description": "GNS Core Operations",
         "function": "gns.core_gns",
         "notif_code": "gns",
         "filter": {"id": "gns"}
-    },
-    "vote": {
-        "op_id": 72,
-        "function": "gns.core_vote",
-        "notif_code": "vot",
-        "filter": {}
-    },
-    "comment": {
-        "op_id": 1,
-        "function": "gns.core_comment",
-        "notif_code": "com",
-        "filter": {}
-    },
-    "deleg": {
-        "op_id": 40,
-        "function": "gns.core_deleg",
-        "notif_code": "del",
-        "filter": {}
-    },
-    "mention": {
-        "op_id": 1,
-        "function": "gns.core_mention",
-        "notif_code": "men",
-        "filter": {}
-    },
-    "author_reward": {
-        "op_id": 51,
-        "function": "gns.core_author_reward",
-        "notif_code": "arw",
-        "filter": {}
-    },
-    "curation_reward": {
-        "op_id": 52,
-        "function": "gns.core_curation_reward",
-        "notif_code": "crw",
-        "filter": {}
-    },
-    "comment_benefactor_reward": {
-        "op_id": 63,
-        "function": "gns.core_comment_benefactor_reward",
-        "notif_code": "brw",
-        "filter": {}
-    },
-    "fill_convert_request": {
-        "op_id": 50,
-        "function": "gns.core_fill_convert_request",
-        "notif_code": "fcr",
-        "filter": {}
     }
 }

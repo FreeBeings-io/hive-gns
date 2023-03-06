@@ -48,6 +48,7 @@ async def root():
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
         head = GnsStatus.get_haf_head()
+        modules_data = GnsStatus.get_all_modules_data()
         sys_head = report['system']['block_num'] or 0
 
         diff = head - sys_head

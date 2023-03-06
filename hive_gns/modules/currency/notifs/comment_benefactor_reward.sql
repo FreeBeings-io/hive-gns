@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _gns_op_id BIGINT
             SELECT _benefactor
             WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _benefactor);
             -- check if subscribed
-            _sub := gns.check_user_filter(_benefactor, 'core', _notif_code);
+            _sub := gns.check_user_filter(_benefactor, 'currency', _notif_code);
             IF _sub = true THEN
                 -- calculate HBD, HIVE and VESTS values
                 _hbd_payout := ((_body->'value'->>'hbd_payout')::json->>'amount')::float / 1000;
@@ -34,7 +34,7 @@ CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _gns_op_id BIGINT
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
                 -- make notification entry
                 INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _benefactor, 'core', _notif_code, _created, _remark, _body, true, _link);
+                VALUES (_gns_op_id, _trx_id, _benefactor, 'currency', _notif_code, _created, _remark, _body, true, _link);
             END IF;
             -- RAISE NOTICE 'value: % \n', _value;
         EXCEPTION WHEN OTHERS THEN

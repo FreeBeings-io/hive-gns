@@ -49,7 +49,7 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
                 WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _username[1]);
 
                 -- check if subscribed
-                _sub := gns.check_user_filter(_username[1], 'core', _notif_code);
+                _sub := gns.check_user_filter(_username[1], 'social', _notif_code);
 
                 IF _sub = true THEN
 
@@ -57,7 +57,7 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
 
                     -- make notification entry
                     INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                    VALUES (_gns_op_id, _trx_id, _username[1], 'core', _notif_code, _created, _remark, _body, true, _link);
+                    VALUES (_gns_op_id, _trx_id, _username[1], 'social', _notif_code, _created, _remark, _body, true, _link);
                 END IF;
             END LOOP;
 
