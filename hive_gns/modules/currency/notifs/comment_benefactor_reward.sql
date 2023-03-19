@@ -1,7 +1,4 @@
--- function to handle notifications for comment benefactor rewards a user receives from another user's post or comment
--- checks accounts, checks subscriptions and saves the benefactor reward notification with hbd, hive and vests values
--- include the author of the post or comment in the notification remark you received a reward from @user's post: HBD,HIVE,VESTS
-CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -20,11 +17,9 @@ CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _gns_op_id BIGINT
             _author := _body->'value'->>'author';
             _permlink := _body->'value'->>'permlink';
             -- check benefactor acount
-            INSERT INTO gns.accounts (account)
-            SELECT _benefactor
-            WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _benefactor);
+            PERFORM gns.check_account(_benefactor);
             -- check if subscribed
-            _sub := gns.check_user_filter(_benefactor, 'currency', _notif_code);
+            _sub := gns.check_user_filter(_benefactor, _module, _notif_code);
             IF _sub = true THEN
                 -- calculate HBD, HIVE and VESTS values
                 _hbd_payout := ((_body->'value'->>'hbd_payout')::json->>'amount')::float / 1000;
@@ -33,14 +28,7 @@ CREATE OR REPLACE FUNCTION gns.core_comment_benefactor_reward( _gns_op_id BIGINT
                 _remark := FORMAT('You received a benefactor reward from %s: %s HBD, %s HIVE, %s VESTS', _author, _hbd_payout, _hive_payout, _vesting_payout);
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
                 -- make notification entry
-                INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _benefactor, 'currency', _notif_code, _created, _remark, _body, true, _link);
+                PERFORM gns.save_notif(_trx_id, _benefactor, _module, _notif_code, _created, _remark, _body, _link, true);
             END IF;
-            -- RAISE NOTICE 'value: % \n', _value;
-        EXCEPTION WHEN OTHERS THEN
-            RAISE NOTICE E'Got exception:
-            SQLSTATE: % 
-            SQLERRM: %
-            DATA: %', SQLSTATE, SQLERRM, _body;
         END;
         $function$;

@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
     description VARCHAR(500) NOT NULL,
     funct VARCHAR(128) NOT NULL,
     op_id SMALLINT NOT NULL,
-    notif_filter JSON NOT NULL
+    notif_filter VARCHAR(500) NOT NULL,
+    prefs JSON NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS gns.accounts(
@@ -43,10 +44,9 @@ CREATE TABLE IF NOT EXISTS gns.accounts(
 
 CREATE TABLE IF NOT EXISTS gns.account_notifs(
     id BIGSERIAL PRIMARY KEY,
-    gns_op_id BIGINT NOT NULL REFERENCES gns.ops(id),
     trx_id BYTEA,
     account VARCHAR(16) NOT NULL REFERENCES gns.accounts(account),
-    module_name VARCHAR(64) NOT NULL,
+    module_name VARCHAR(64) NOT NULL REFERENCES gns.module_state(module),
     notif_code VARCHAR(3) NOT NULL,
     created TIMESTAMP NOT NULL,
     remark VARCHAR(500) NOT NULL,

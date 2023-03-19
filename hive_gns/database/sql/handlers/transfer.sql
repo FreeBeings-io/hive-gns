@@ -34,9 +34,6 @@ CREATE OR REPLACE FUNCTION gns.process_transfer_operation( _start_gns_op_id BIGI
             END LOOP;
         BEGIN
             
-        EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
-                SQLSTATE: % 
-                SQLERRM: %', SQLSTATE, SQLERRM;
+        
         END;
     $function$;

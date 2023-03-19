@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_mention( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -32,40 +32,25 @@ CREATE OR REPLACE FUNCTION gns.core_mention( _gns_op_id BIGINT, _trx_id BYTEA, _
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
             END IF;
 
-            -- check if body contains @username of max 16 characters
-            -- using regex letters, numbers and dash
-            -- extract username (without the @ character) from body if found then
-                -- check user account
-                -- check if subscribed
-                -- make notification entry, for each username found
             FOR _username IN SELECT DISTINCT regexp_matches(_post_body, '@([a-zA-Z0-9-]{1,16})', 'g') LOOP
                 IF _username[1] = _author THEN
                     -- skip if username is the same as the author
                     CONTINUE;
                 END IF;
                 -- check user account
-                INSERT INTO gns.accounts (account)
-                SELECT _username[1]
-                WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _username[1]);
+                PERFORM gns.check_account(_username[1]);
 
                 -- check if subscribed
-                _sub := gns.check_user_filter(_username[1], 'social', _notif_code);
+                _sub := gns.check_user_filter(_username[1], _module, _notif_code);
 
                 IF _sub = true THEN
 
                     _remark := FORMAT('%s mentioned you in a %s', _author, _type);
 
                     -- make notification entry
-                    INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                    VALUES (_gns_op_id, _trx_id, _username[1], 'social', _notif_code, _created, _remark, _body, true, _link);
+                    PERFORM gns.save_notif(_trx_id, _username[1], _module, _notif_code, _created, _remark, _body, _link, true);
                 END IF;
             END LOOP;
 
-        EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
-                SQLSTATE: % 
-                SQLERRM: %
-                DATA: %
-                USERNAME: %', SQLSTATE, SQLERRM, _body, _username;
         END;
         $function$;

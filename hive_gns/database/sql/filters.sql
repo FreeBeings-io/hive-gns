@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.check_op_filter(_op_id INT, _body JSON, _filter JSON)
+CREATE OR REPLACE FUNCTION gns.check_op_filter(_op_id SMALLINT, _body JSON, _filter VARCHAR)
     RETURNS BOOLEAN
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -15,15 +15,19 @@ CREATE OR REPLACE FUNCTION gns.check_user_filter(_acc VARCHAR(16), _module VARCH
             _prefs JSON;
             _module_prefs JSON;
         BEGIN
+            -- if acc is null, raise exception
+            IF _acc IS NULL THEN
+                RAISE EXCEPTION 'Account is null';
+            END IF;
             -- check if user has enabled that module and notif code, from gns.accounts.prefs
             SELECT prefs INTO _prefs FROM gns.accounts WHERE account = _acc;
-            RAISE NOTICE 'prefs: %', _prefs;
             IF _prefs IS NULL THEN
+                RAISE NOTICE 'No prefs found: acc: %', _acc;
                 RETURN false;
             END IF;
             _module_prefs := _prefs->'enabled'->_module;
-            RAISE NOTICE 'module_prefs: %', _module_prefs;
             IF _module_prefs IS NULL THEN
+                RAISE NOTICE 'No module_prefs: %', _acc;
                 RETURN false;
             END IF;
             IF '*' = ANY(ARRAY(SELECT json_array_elements_text(_module_prefs))) THEN
@@ -32,6 +36,7 @@ CREATE OR REPLACE FUNCTION gns.check_user_filter(_acc VARCHAR(16), _module VARCH
             IF _notif_code = ANY(ARRAY(SELECT json_array_elements_text(_module_prefs))) THEN
                 RETURN true;
             END IF;
+            RAISE NOTICE 'No prefs match: %', _acc;
             RETURN false;
         END;
     $function$;

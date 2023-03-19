@@ -6,41 +6,50 @@
         "description": "Hive/HBD transfers",
         "function": "gns.core_transfer",
         "notif_code": "trn",
-        "filter": {}
+        "filter": "",
+        "prefs": {
+            "min_hbd": "number",
+            "min_hive": "number"
+        }
     },
     "deleg": {
         "op_id": 40,
         "description": "Delegations",
         "function": "gns.core_deleg",
         "notif_code": "del",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "author_reward": {
         "op_id": 51,
         "description": "Author rewards",
         "function": "gns.core_author_reward",
         "notif_code": "arw",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "curation_reward": {
         "op_id": 52,
         "description": "Curation rewards",
         "function": "gns.core_curation_reward",
         "notif_code": "crw",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "comment_benefactor_reward": {
         "op_id": 63,
         "description": "Comment benefactor rewards",
         "function": "gns.core_comment_benefactor_reward",
         "notif_code": "brw",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "fill_convert_request": {
         "op_id": 50,
         "description": "Fill convert requests",
         "function": "gns.core_fill_convert_request",
         "notif_code": "fcr",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     }
 }

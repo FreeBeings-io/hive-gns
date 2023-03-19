@@ -27,12 +27,6 @@ def get_sys_status():
 def get_app_data():
     """Populate categories with all available module:notif_code pairings."""
     _data = GnsStatus.get_all_modules_data()
-    # for each entry in data,
-    # take first element of list then
-        # for each element in resulting list
-        # use the first element as the key
-        # use the second, third and fourth elements as the value
-    # return data
     data = {}
     for module in _data:
         entries = _data[module]

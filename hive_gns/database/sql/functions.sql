@@ -10,7 +10,7 @@ CREATE OR REPLACE FUNCTION gns.get_internal_func( _op_type_id SMALLINT)
                 RETURN 'process_transfer_operation';
             END IF;
         EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
+                RAISE NOTICE E'Got exception get_internal_func:
                 SQLSTATE: % 
                 SQLERRM: %', SQLSTATE, SQLERRM;
         END;
@@ -67,8 +67,8 @@ CREATE OR REPLACE FUNCTION gns.prune_gns()
     LANGUAGE plpgsql
     VOLATILE AS $function$
         BEGIN
-            DELETE FROM gns.ops
-            WHERE block_num <= (hive.app_get_irreversible_block() - (30 * 24 * 60 * 20));
+            DELETE FROM gns.account_notifs
+            WHERE created <= NOW() - INTERVAL '30 days';
         END;
     $function$;
 
@@ -134,3 +134,34 @@ CREATE OR REPLACE FUNCTION gns.app_get_all_modules_data()
             RETURN _result;
         END;
     $function$;
+
+CREATE OR REPLACE FUNCTION gns.check_account(_acc VARCHAR(16))
+    RETURNS void
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        DECLARE
+            _exists BOOLEAN;
+        BEGIN
+            -- if acc is null then raise exception
+            IF _acc IS NULL THEN
+                RAISE EXCEPTION 'Account is null';
+            END IF;
+            SELECT EXISTS (SELECT * FROM gns.accounts WHERE account = _acc) INTO _exists;
+            IF NOT _exists THEN
+                INSERT INTO gns.accounts (account)
+                VALUES (_acc);
+            END IF;
+        END;
+    $function$;
+
+CREATE OR REPLACE FUNCTION gns.save_notif(_trx_id BYTEA, _acc VARCHAR, _module VARCHAR, _notif_code VARCHAR, _created TIMESTAMP, _remark VARCHAR, _payload JSON, _link VARCHAR, _verified BOOLEAN)
+    RETURNS void
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        BEGIN
+            -- insert notification
+            INSERT INTO gns.account_notifs (trx_id, account, module_name, notif_code, created, remark, payload, link, verified)
+            VALUES (_trx_id, _acc, _module, _notif_code, _created, _remark, _payload, _link, _verified);
+        END;
+    $function$;
+

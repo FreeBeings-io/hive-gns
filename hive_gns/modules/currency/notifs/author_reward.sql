@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_author_reward( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_author_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -18,12 +18,10 @@ CREATE OR REPLACE FUNCTION gns.core_author_reward( _gns_op_id BIGINT, _trx_id BY
             _permlink := _body->'value'->>'permlink';
 
             -- check author acount
-            INSERT INTO gns.accounts (account)
-            SELECT _author
-            WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _author);
+            PERFORM gns.check_account(_author);
 
             -- check if subscribed
-            _sub := gns.check_user_filter(_author, 'currency', _notif_code);
+            _sub := gns.check_user_filter(_author, _module, _notif_code);
 
             IF _sub = true THEN
 
@@ -36,16 +34,12 @@ CREATE OR REPLACE FUNCTION gns.core_author_reward( _gns_op_id BIGINT, _trx_id BY
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);
 
                 -- make notification entry
-                INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _author, 'currency', _notif_code, _created, _remark, _body, true, _link);
+                PERFORM gns.save_notif(_trx_id, _author, _module, _notif_code, _created, _remark, _body, _link, true);
+
             END IF;
 
             -- RAISE NOTICE 'value: % \n', _value;
 
-        EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
-                SQLSTATE: % 
-                SQLERRM: %
-                DATA: %', SQLSTATE, SQLERRM, _body;
+        
         END;
         $function$;

@@ -32,9 +32,6 @@ CREATE OR REPLACE FUNCTION gns.process_custom_json_operation( _start_gns_op_id B
             END LOOP;
         BEGIN
             
-        EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
-                SQLSTATE: % 
-                SQLERRM: %', SQLSTATE, SQLERRM;
+        
         END;
     $function$;

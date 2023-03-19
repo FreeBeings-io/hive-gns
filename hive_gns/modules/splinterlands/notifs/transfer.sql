@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -14,8 +14,9 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYT
             _sub BOOLEAN;
             _link VARCHAR(500);
         BEGIN
-            -- check if subscribed
-            _sub := gns.check_user_filter(_to, 'splinterlands', _notif_code);
+
+            -- check acount
+
 
             IF _sub = true THEN
                 _op_id := _body->'value'->>'id';
@@ -28,23 +29,23 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _gns_op_id BIGINT, _trx_id BYT
                     _qty := (_body->'value'->>'json')::json->>'qty';
                     _memo := (_body->'value'->>'json')::json->>'memo';
                     _token := (_body->'value'->>'json')::json->>'token';
+                    
+                    IF _to IS NULL THEN
+                        RETURN;
+                    END IF;
+
+                    -- check account
+                    PERFORM gns.check_account(_to);
+                    -- check if subscribed
+                    _sub := gns.check_user_filter(_to, _module, _notif_code);
 
                     _remark := FORMAT('you have received %s %s from %s', _qty, _token, _from);
                     _link := FORMAT('https://hive.blog/@%s', _from);
 
-                    -- check acount
-                    INSERT INTO gns.accounts (account)
-                    SELECT _to
-                    WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _to);
-
                     -- make notification entry
-                    INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload)
-                    VALUES (_gns_op_id, _trx_id, _to, 'splinterlands', _notif_code, _created, _remark, _body);
+                    PERFORM gns.save_notif(_trx_id, _to, _module, _notif_code, _created, _remark, _body, _link);
                 END IF;
             END IF;
-        EXCEPTION WHEN OTHERS THEN
-                RAISE NOTICE E'Got exception:
-                SQLSTATE: % 
-                SQLERRM: %', SQLSTATE, SQLERRM;
+        
         END;
         $function$;

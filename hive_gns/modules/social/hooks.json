@@ -6,20 +6,23 @@
         "description": "Vote on post or comment",
         "function": "gns.core_vote",
         "notif_code": "vot",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "comment": {
         "op_id": 1,
         "description": "Comment on post",
         "function": "gns.core_comment",
         "notif_code": "com",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     },
     "mention": {
         "op_id": 1,
         "description": "Mention in post or comment",
         "function": "gns.core_mention",
         "notif_code": "men",
-        "filter": {}
+        "filter": "",
+        "prefs": {}
     }
 }

@@ -6,6 +6,7 @@
         "description": "DEC transfers",
         "function": "gns.sm_token_transfer",
         "notif_code": "trn",
-        "filter": {"id":"sm_token_transfer"}
+        "filter": "",
+        "prefs": {}
     }
 }

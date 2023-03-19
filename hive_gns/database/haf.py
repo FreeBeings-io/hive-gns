@@ -58,7 +58,8 @@ class Haf:
             _funct = hooks[notif_name]['function']
             _op_id = int(hooks[notif_name]['op_id'])
             _description = hooks[notif_name]['description']
-            _filter = json.dumps(hooks[notif_name]['filter'])
+            _filter = hooks[notif_name]['filter']
+            _prefs = json.dumps(hooks[notif_name]['prefs'])
             has_hooks_entry = db.do('select_exists',
                 f"""
                     SELECT module FROM {config['schema']}.module_hooks 
@@ -68,8 +69,8 @@ class Haf:
             if has_hooks_entry is False:
                 db.do('execute',
                     f"""
-                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter, description)
-                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}', '{_description}');
+                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter, description, prefs)
+                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}', '{_description}', '{_prefs}');
                     """
                 )
             else:
@@ -77,7 +78,7 @@ class Haf:
                     f"""
                         UPDATE {config['schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
-                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}', description = '{_description}';
+                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}', description = '{_description}', prefs = '{_prefs}';
                     """
                 )
 

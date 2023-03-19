@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id BYTEA, _created TIMESTAMP, _body JSON, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -21,6 +21,11 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id BYTEA, 
             _nai := (_body->'value'->>'amount')::json->>'nai';
             _memo := _body->'value'->>'memo';
 
+            -- if any above is null, skip
+            IF _from IS NULL OR _to IS NULL OR _nai IS NULL THEN
+                RETURN;
+            END IF;
+
             -- TODO: user prefs filtering
 
             IF _nai = '@@000000013' THEN
@@ -34,22 +39,19 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _gns_op_id BIGINT, _trx_id BYTEA, 
                 _amount := ((_body->'value'->>'amount')::json->>'amount')::float / 1000000;
             END IF;
 
+            -- check acount
+            PERFORM gns.check_account(_to);
+
             -- check if subscribed
-            _sub := gns.check_user_filter(_to, 'currency', _notif_code);
+            _sub := gns.check_user_filter(_to, _module, _notif_code);
 
             IF _sub = true THEN
 
                 _remark := FORMAT('you have received %s %s from %s', _amount, _currency, _from);
                 _link := FORMAT('https://hive.blog/@%s', _from);
 
-                -- check acount
-                INSERT INTO gns.accounts (account)
-                SELECT _to
-                WHERE NOT EXISTS (SELECT * FROM gns.accounts WHERE account = _to);
-
                 -- make notification entry
-                INSERT INTO gns.account_notifs (gns_op_id, trx_id, account, module_name, notif_code, created, remark, payload, verified, link)
-                VALUES (_gns_op_id, _trx_id, _to, 'currency', _notif_code, _created, _remark, _body, true, _link);
+                PERFORM gns.save_notif(_trx_id, _to, _module, _notif_code, _created, _remark, _body, _link, true);
             END IF;
 
         END;

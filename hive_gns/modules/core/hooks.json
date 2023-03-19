@@ -6,6 +6,7 @@
         "description": "GNS Core Operations",
         "function": "gns.core_gns",
         "notif_code": "gns",
-        "filter": {"id": "gns"}
+        "filter": "",
+        "prefs": {}
     }
 }

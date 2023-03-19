@@ -5,7 +5,7 @@ from hive_gns.database.access import db
 from hive_gns.server.fields import Fields
 from hive_gns.tools import MAX_LIMIT, NAI_MAP, is_valid_hive_account
 
-MODULE_NAME = 'core'
+MODULE_NAME = 'social'
 NOTIF_CODE = 'vot'
 
 config = Config.config

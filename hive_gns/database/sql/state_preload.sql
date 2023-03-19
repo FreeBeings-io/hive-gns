@@ -3,6 +3,8 @@ CREATE OR REPLACE PROCEDURE gns.load_state(_first_block INTEGER, _last_block INT
     AS $$
         DECLARE
             temprow RECORD;
+            _module VARCHAR := 'core';
+            _notif_code VARCHAR := 'gns';
             _hive_opid BIGINT;
             _block_num INTEGER;
             _block_timestamp TIMESTAMP;
@@ -43,7 +45,7 @@ CREATE OR REPLACE PROCEDURE gns.load_state(_first_block INTEGER, _last_block INT
                     _hive_op_type_id := temprow.op_type_id;
                     _body := (temprow.body)::json;
                     RAISE NOTICE '%s', _body;
-                    PERFORM gns.core_gns(0, encode('\x0000000000000000000000000000000000000000','hex'), _block_timestamp, _body, 'gns');
+                    PERFORM gns.core_gns(encode('\x0000000000000000000000000000000000000000','hex'), _block_timestamp, _body, _module, _notif_code);
 
                 END LOOP;
                 UPDATE gns.global_props SET state_preloaded = true;

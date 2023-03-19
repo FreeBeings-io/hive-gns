@@ -7,6 +7,8 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             tempnotif RECORD;
             tempmodule RECORD;
             _module_schema VARCHAR;
+            _enabled_modules VARCHAR[];
+            _module_hooks JSON[];
 
             _global_start_block INTEGER;
             _head_haf_block_num INTEGER;
@@ -18,12 +20,27 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 1000;
+            _step := 100;
             _head_haf_block_num := hive.app_get_irreversible_block();
             RAISE NOTICE 'Found irreversible head haf block num: %s', _head_haf_block_num;
             _global_start_block := _head_haf_block_num - (1 * 24 * 60 * 20);
             RAISE NOTICE 'Global start block: %s', _head_haf_block_num;
             SELECT latest_block_num INTO _latest_block_num FROM gns.global_props;
+            
+            -- load enabled modules
+            FOR tempmodule IN
+                SELECT module FROM gns.module_state WHERE enabled = true
+            LOOP
+                _enabled_modules := array_append(_enabled_modules, tempmodule.module);
+            END LOOP;
+
+            FOR tempnotif IN
+                SELECT * FROM gns.module_hooks
+                WHERE module = ANY (_enabled_modules)
+            LOOP
+                _module_hooks := array_append(_module_hooks, json_build_object('module', tempnotif.module, 'funct', tempnotif.funct, 'notif_code', tempnotif.notif_code, 'op_id', tempnotif.op_id));
+            END LOOP;
+
 
             --decide which block to start at initially
             IF _latest_block_num IS NULL THEN
@@ -62,23 +79,11 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 AND ov.block_num <= _last_block
                             ORDER BY ov.block_num, ov.id
                         LOOP
-                            INSERT INTO gns.ops(
-                                op_type_id, block_num, created, transaction_id, body)
-                            VALUES (
-                                temprow.op_type_id, temprow.block_num,
-                                temprow.timestamp, temprow.trx_hash, temprow.body);
+                            -- process operation
+                            PERFORM gns.process_operation(temprow, _module_hooks);
                         END LOOP;
                         RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
-                        -- sync modules
-                        FOR tempmodule IN
-                            SELECT * FROM gns.module_state 
-                        LOOP
-                            IF tempmodule.enabled = true THEN
-                                RAISE NOTICE 'Attempting to sync module: %', tempmodule.module;
-                                CALL gns.sync_module(tempmodule.module);
-                                RAISE NOTICE 'Module synced: %', tempmodule.module;
-                            END IF;
-                        END LOOP;
+                        -- prune old data
                         PERFORM gns.prune_gns();
                         -- update global props and save
                         UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block;
@@ -93,53 +98,22 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
         END;
     $$;
 
-CREATE OR REPLACE PROCEDURE gns.sync_module(_module_name VARCHAR(64) )
+CREATE OR REPLACE FUNCTION gns.process_operation( _temprow RECORD, _module_hooks JSON[] )
+    RETURNS VOID
     LANGUAGE plpgsql
     AS $$
         DECLARE
-            temprow RECORD;
-            tempnotif RECORD;
-            _done BOOLEAN;
-            _last_block_time TIMESTAMP;
-            _last_op BIGINT;
-            _last_block INTEGER;
-            _op_ids SMALLINT[];
-            _latest_gns_op BIGINT;
+            tempnotif JSON;
+            _module_schema VARCHAR;
         BEGIN
-            SELECT ARRAY (SELECT op_id FROM gns.module_hooks WHERE module = _module_name) INTO _op_ids;
-            SELECT latest_gns_op_id INTO _latest_gns_op FROM gns.module_state WHERE module = _module_name;
-
-            FOR temprow IN
-                SELECT
-                    id,
-                    op_type_id,
-                    block_num,
-                    created,
-                    transaction_id,
-                    body::varchar::json
-                FROM gns.ops
-                WHERE id > _latest_gns_op
-                    AND op_type_id = ANY (_op_ids)
-                ORDER BY id
+            FOREACH tempnotif IN ARRAY _module_hooks
             LOOP
-                FOR tempnotif IN 
-                    SELECT DISTINCT ON (funct) * FROM gns.module_hooks
-                    WHERE module = _module_name
-                    AND op_id = temprow.op_type_id
-                LOOP
-                    IF gns.check_op_filter(temprow.op_type_id, temprow.body, tempnotif.notif_filter) THEN
-                        EXECUTE FORMAT('SELECT %s ($1,$2,$3,$4,$5)', tempnotif.funct)
-                            USING temprow.id, temprow.transaction_id, temprow.created, temprow.body, tempnotif.notif_code;
+                IF (tempnotif->>'op_id')::smallint = _temprow.op_type_id THEN
+                    IF gns.check_op_filter(_temprow.op_type_id, _temprow.body, tempnotif->>'notif_filter') THEN
+                        EXECUTE FORMAT('SELECT %s ($1,$2,$3,$4,$5)', tempnotif->>'funct')
+                            USING _temprow.trx_hash, _temprow.timestamp, _temprow.body, tempnotif->>'module', tempnotif->>'notif_code';
                     END IF;
-                END LOOP;
-                _last_block := temprow.block_num;
-                _last_op := temprow.id;
+                END IF;
             END LOOP;
-            -- save done as run end
-            
-            UPDATE gns.module_state SET check_in = NOW() WHERE module = _module_name;
-            UPDATE gns.module_state SET latest_gns_op_id = COALESCE(_last_op, _latest_gns_op) WHERE module = _module_name;
-            UPDATE gns.module_state SET latest_block_num = _last_block WHERE module = _module_name;
-            COMMIT;
         END;
     $$;
