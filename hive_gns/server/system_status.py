@@ -21,7 +21,6 @@ def get_sys_status():
     cur = GnsStatus.get_global_latest_state()
     for sync_key,map_key in STATUS_MAPPING:
         sync[sync_key] = cur[map_key]
-    sync['modules'] = get_module_status()
     return sync
 
 def get_app_data():

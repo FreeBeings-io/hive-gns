@@ -57,11 +57,6 @@ async def root():
         else:
             if diff > 30:
                 health = f"BAD - {diff} blocks behind... "
-            for mod in report['system']['modules']:
-                mod_head = report['system']['modules'][mod]['latest_block_num'] or 0
-                if mod_head < int(sys_head - 20):
-                    diff_mod = mod_head - sys_head
-                    health += f"BAD - module '{mod}' is {diff_mod} blocks behind... "
         report['health'] = health
         report['app_data'] = system_status.get_app_data()
     except Exception as err:
