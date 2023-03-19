@@ -63,7 +63,8 @@ class GnsStatus:
     def get_module_list(cls):
         _res = []
         sql = f"""
-            SELECT module FROM gns.module_state;
+            SELECT module FROM gns.module_state
+            WHERE module != 'core';
         """.replace("gns.", f"{config['schema']}.")
         res = db.select(sql, ['module'])
         for entry in res:

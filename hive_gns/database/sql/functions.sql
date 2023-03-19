@@ -125,6 +125,10 @@ CREATE OR REPLACE FUNCTION gns.app_get_all_modules_data()
             FOR _module IN SELECT DISTINCT module
             FROM gns.module_hooks
             LOOP
+                -- exclude core module
+                IF _module = 'core' THEN
+                    CONTINUE;
+                END IF;
                 _result := _result || jsonb_build_object(_module, (SELECT json_agg(mod.details) FROM (
                     SELECT json_build_array(gms.module_category, gmh.description, gmh.module, gmh.notif_code) details
                     FROM gns.module_hooks gmh
