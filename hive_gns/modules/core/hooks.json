@@ -1,6 +1,6 @@
 {
     "enabled": true,
-    "module_category": "Social",
+    "module_category": "GNS",
     "gns": {
         "op_id": 18,
         "description": "GNS Core Operations",
