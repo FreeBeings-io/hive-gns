@@ -120,12 +120,12 @@ async def account_notifications_category(account:str, category:str, limit:int=MA
     if not is_valid_hive_account(account.replace('@', '')):
         raise HTTPException(status_code=400, detail="invalid Hive account entered for")
     app_data = system_status.get_app_data()
-    if category not in app_data['categories']:
-        supported = app_data['categories'].keys()
+    if category not in app_data:
+        supported = app_data.keys()
         raise HTTPException(status_code=400, detail=f"the category entered is not valid. Supported: {supported}")
     _pairs = []
-    for pair in app_data['categories'][category]:
-        _pairs.append(app_data['categories'][category][pair])
+    for pair in app_data[category]:
+        _pairs.append(app_data[category][pair])
     
     if limit > MAX_LIMIT:
         limit = MAX_LIMIT
