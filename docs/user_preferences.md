@@ -18,7 +18,7 @@ GNS allows granular control over notifications. You can enable/disable notificat
 
 ```
 [
-    "prefs",
+    "enabled",
     {
         "enabled": {
             "currency": ["trn"],
@@ -42,7 +42,7 @@ Enable all notifications in the `currency` and `social` modules:
 
 ```
 [
-    "prefs",
+    "enabled",
     {
         "enabled": {
             "currency": ["*"],
@@ -56,7 +56,7 @@ Enable the `vot` and `men` notifications in the `social` module:
 
 ```
 [
-    "prefs",
+    "enabled",
     {
         "enabled": {
             "social": ["vot", "men"]
@@ -69,7 +69,7 @@ Enable all notifications in the `social` and `splinterlands` modules:
 
 ```
 [
-    "prefs",
+    "enabled",
     {
         "enabled": {
             "social": ["*"],
@@ -83,7 +83,7 @@ Disable all notifications in the `currency` module:
 
 ```
 [
-    "prefs",
+    "enabled",
     {
         "enabled": {
             "currency": []
