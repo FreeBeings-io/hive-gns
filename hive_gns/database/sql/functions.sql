@@ -43,12 +43,32 @@ CREATE OR REPLACE FUNCTION gns.get_hive_op_id_from_block(_block_num INTEGER)
         END;
     $function$;
 
+CREATE OR REPLACE FUNCTION gns.get_start_block()
+    RETURNS INTEGER
+    LANGUAGE plpgsql
+    VOLATILE AS $function$
+        BEGIN
+            RETURN hive.app_get_irreversible_block() - (7 * 24 * 60 * 20);
+        END;
+    $function$;
+
 CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
     RETURNS BOOLEAN
     LANGUAGE plpgsql
     VOLATILE AS $function$
+        DECLARE
+            _good BOOLEAN;
+            _state_preloaded BOOLEAN;
+            _enabled BOOLEAN;
         BEGIN
-            RETURN (SELECT sync_enabled FROM gns.global_props LIMIT 1);
+            _state_preloaded := (SELECT state_preloaded FROM gns.global_props LIMIT 1);
+            _enabled := (SELECT sync_enabled FROM gns.global_props LIMIT 1);
+            IF _state_preloaded AND _enabled THEN
+                _good := true;
+            ELSE
+                _good := false;
+            END IF;
+            RETURN _good;
         END;
     $function$;
 
@@ -129,8 +149,8 @@ CREATE OR REPLACE FUNCTION gns.app_get_all_modules_data()
                 IF _module = 'core' THEN
                     CONTINUE;
                 END IF;
-                _result := _result || jsonb_build_object(_module, (SELECT json_agg(mod.details) FROM (
-                    SELECT json_build_array(gms.module_category, gmh.description, gmh.module, gmh.notif_code) details
+                _result := _result || jsonb_build_object(_module, (SELECT jsonb_agg(mod.details) FROM (
+                    SELECT jsonb_build_array(gms.module_category, gmh.description, gmh.module, gmh.notif_code) details
                     FROM gns.module_hooks gmh
                     JOIN gns.module_state gms ON gms.module = gmh.module
                     WHERE gmh.module=_module) mod));
@@ -158,7 +178,7 @@ CREATE OR REPLACE FUNCTION gns.check_account(_acc VARCHAR(16))
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.save_notif(_trx_id BYTEA, _acc VARCHAR, _module VARCHAR, _notif_code VARCHAR, _created TIMESTAMP, _remark VARCHAR, _payload JSON, _link VARCHAR, _verified BOOLEAN)
+CREATE OR REPLACE FUNCTION gns.save_notif(_trx_id BYTEA, _acc VARCHAR, _module VARCHAR, _notif_code VARCHAR, _created TIMESTAMP, _remark VARCHAR, _payload JSONB, _link VARCHAR, _verified BOOLEAN)
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$

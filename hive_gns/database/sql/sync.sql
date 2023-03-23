@@ -1,5 +1,5 @@
 
-CREATE OR REPLACE PROCEDURE gns.sync_main()
+CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
     LANGUAGE plpgsql
     AS $$
         DECLARE
@@ -8,7 +8,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             tempmodule RECORD;
             _module_schema VARCHAR;
             _enabled_modules VARCHAR[];
-            _module_hooks JSON[];
+            _module_hooks JSONB[];
 
             _global_start_block INTEGER;
             _head_haf_block_num INTEGER;
@@ -20,11 +20,8 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 100;
-            _head_haf_block_num := hive.app_get_irreversible_block();
-            RAISE NOTICE 'Found irreversible head haf block num: %s', _head_haf_block_num;
-            _global_start_block := _head_haf_block_num - (1 * 24 * 60 * 20);
-            RAISE NOTICE 'Global start block: %s', _head_haf_block_num;
+            _step := 200;
+            RAISE NOTICE 'Global start block: %s', _global_start_block;
             SELECT latest_block_num INTO _latest_block_num FROM gns.global_props;
             
             -- load enabled modules
@@ -38,7 +35,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                 SELECT * FROM gns.module_hooks
                 WHERE module = ANY (_enabled_modules)
             LOOP
-                _module_hooks := array_append(_module_hooks, json_build_object('module', tempnotif.module, 'funct', tempnotif.funct, 'notif_code', tempnotif.notif_code, 'op_id', tempnotif.op_id));
+                _module_hooks := array_append(_module_hooks, jsonb_build_object('module', tempnotif.module, 'funct', tempnotif.funct, 'notif_code', tempnotif.notif_code, 'op_id', tempnotif.op_id));
             END LOOP;
 
 
@@ -70,7 +67,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
                                 ov.timestamp,
                                 ov.trx_in_block,
                                 tv.trx_hash,
-                                ov.body::varchar::json
+                                ov.body::varchar::jsonb
                             FROM hive.operations_view ov
                             LEFT JOIN hive.transactions_view tv
                                 ON tv.block_num = ov.block_num
@@ -98,12 +95,12 @@ CREATE OR REPLACE PROCEDURE gns.sync_main()
         END;
     $$;
 
-CREATE OR REPLACE FUNCTION gns.process_operation( _temprow RECORD, _module_hooks JSON[] )
+CREATE OR REPLACE FUNCTION gns.process_operation( _temprow RECORD, _module_hooks JSONB[] )
     RETURNS VOID
     LANGUAGE plpgsql
     AS $$
         DECLARE
-            tempnotif JSON;
+            tempnotif JSONB;
             _module_schema VARCHAR;
         BEGIN
             FOREACH tempnotif IN ARRAY _module_hooks

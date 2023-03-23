@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_vote( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_vote( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION gns.core_vote( _trx_id BYTEA, _created TIMESTAMP, _bo
             _voter VARCHAR(16);
             _author VARCHAR(16);
             _permlink VARCHAR(500);
-            _pending_payout JSON;
+            _pending_payout JSONB;
             _value NUMERIC(10,2);
             _remark VARCHAR(500);
             _sub BOOLEAN;

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -23,12 +23,12 @@ CREATE OR REPLACE FUNCTION gns.sm_token_transfer( _trx_id BYTEA, _created TIMEST
 
                 IF _op_id = 'sm_token_transfer' THEN
                     -- normal transfer_operation
-                    _req_auths := ARRAY(SELECT json_array_elements_text((_body->'value'->'required_auths')));
+                    _req_auths := ARRAY(SELECT jsonb_array_elements_text((_body->'value'->'required_auths')));
                     _from := _req_auths[1];
-                    _to := (_body->'value'->>'json')::json->>'to';
-                    _qty := (_body->'value'->>'json')::json->>'qty';
-                    _memo := (_body->'value'->>'json')::json->>'memo';
-                    _token := (_body->'value'->>'json')::json->>'token';
+                    _to := (_body->'value'->>'json')::jsonb->>'to';
+                    _qty := (_body->'value'->>'json')::jsonb->>'qty';
+                    _memo := (_body->'value'->>'json')::jsonb->>'memo';
+                    _token := (_body->'value'->>'json')::jsonb->>'token';
                     
                     IF _to IS NULL THEN
                         RETURN;

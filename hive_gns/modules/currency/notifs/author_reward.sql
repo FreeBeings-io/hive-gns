@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_author_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_author_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -26,9 +26,9 @@ CREATE OR REPLACE FUNCTION gns.core_author_reward( _trx_id BYTEA, _created TIMES
             IF _sub = true THEN
 
                 -- calculate HBD, HIVE and VESTS values
-                _hbd_payout := ((_body->'value'->>'hbd_payout')::json->>'amount')::float / 1000;
-                _hive_payout := ((_body->'value'->>'hive_payout')::json->>'amount')::float / 1000;
-                _vesting_payout := ((_body->'value'->>'vesting_payout')::json->>'amount')::float / 1000000;
+                _hbd_payout := ((_body->'value'->>'hbd_payout')::jsonb->>'amount')::float / 1000;
+                _hive_payout := ((_body->'value'->>'hive_payout')::jsonb->>'amount')::float / 1000;
+                _vesting_payout := ((_body->'value'->>'vesting_payout')::jsonb->>'amount')::float / 1000000;
 
                 _remark := FORMAT('You received a reward for your post. %s HBD, %s HIVE, %s VESTS', _hbd_payout, _hive_payout, _vesting_payout);
                 _link := FORMAT('https://hive.blog/@%s/%s', _author, _permlink);

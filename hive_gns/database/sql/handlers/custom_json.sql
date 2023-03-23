@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.process_custom_json_operation( _start_gns_op_id BIGINT, _end_gns_op_id BIGINT, _code VARCHAR(3), _func VARCHAR, _filter JSON )
+CREATE OR REPLACE FUNCTION gns.process_custom_json_operation( _start_gns_op_id BIGINT, _end_gns_op_id BIGINT, _code VARCHAR(3), _func VARCHAR, _filter JSONB )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$

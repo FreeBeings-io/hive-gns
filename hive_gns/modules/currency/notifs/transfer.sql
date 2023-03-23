@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -11,14 +11,14 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP,
             _currency VARCHAR(4);
             _remark VARCHAR(500);
             _read TIMESTAMP;
-            _read_json JSON;
+            _read_json JSONB;
             _sub BOOLEAN;
             _link VARCHAR(500);
         BEGIN
             -- transfer_operation
             _from := _body->'value'->>'from';
             _to := _body->'value'->>'to';
-            _nai := (_body->'value'->>'amount')::json->>'nai';
+            _nai := (_body->'value'->>'amount')::jsonb->>'nai';
             _memo := _body->'value'->>'memo';
 
             -- if any above is null, skip
@@ -30,13 +30,13 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP,
 
             IF _nai = '@@000000013' THEN
                 _currency := 'HBD';
-                _amount := ((_body->'value'->>'amount')::json->>'amount')::float / 1000;
+                _amount := ((_body->'value'->>'amount')::jsonb->>'amount')::float / 1000;
             ELSIF _nai = '@@000000021' THEN
                 _currency := 'HIVE';
-                _amount := ((_body->'value'->>'amount')::json->>'amount')::float / 1000;
+                _amount := ((_body->'value'->>'amount')::jsonb->>'amount')::float / 1000;
             ELSIF _nai = '@@000000037' THEN
                 _currency := 'HP';
-                _amount := ((_body->'value'->>'amount')::json->>'amount')::float / 1000000;
+                _amount := ((_body->'value'->>'amount')::jsonb->>'amount')::float / 1000000;
             END IF;
 
             -- check acount

@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS gns.global_props(
     latest_block_num INTEGER,
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
-    sync_enabled BOOLEAN DEFAULT true
+    state_preload_progress FLOAt DEFAULT 0,
+    sync_enabled BOOLEAN DEFAULT false
 );
 
 CREATE TABLE IF NOT EXISTS gns.ops(
@@ -11,7 +12,7 @@ CREATE TABLE IF NOT EXISTS gns.ops(
     block_num INTEGER NOT NULL,
     created TIMESTAMP,
     transaction_id BYTEA,
-    body JSON
+    body JSONB
 );
 
 CREATE TABLE IF NOT EXISTS gns.module_state(
@@ -31,15 +32,14 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
     funct VARCHAR(128) NOT NULL,
     op_id SMALLINT NOT NULL,
     notif_filter VARCHAR(500) NOT NULL,
-    prefs JSON NOT NULL
+    prefs JSONB NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS gns.accounts(
     account VARCHAR(16) PRIMARY KEY,
-    last_reads JSON DEFAULT FORMAT('{"all": "%s"}', timezone('UTC', now()) - '30 days'::interval)::json,
-    prefs JSON DEFAULT '{"enabled":{"currency":["*"],"social":["*"]}}'::json,
-    prefs_updated TIMESTAMP,
-    prefs_flag BOOLEAN DEFAULT false
+    last_reads JSONB DEFAULT FORMAT('{"all": "%s"}', timezone('UTC', now()) - '30 days'::interval)::jsonb,
+    prefs JSONB DEFAULT '{}'::jsonb,
+    prefs_updated TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS gns.account_notifs(
@@ -50,7 +50,7 @@ CREATE TABLE IF NOT EXISTS gns.account_notifs(
     notif_code VARCHAR(3) NOT NULL,
     created TIMESTAMP NOT NULL,
     remark VARCHAR(500) NOT NULL,
-    payload JSON NOT NULL,
+    payload JSONB NOT NULL,
     link VARCHAR(500),
     verified BOOLEAN DEFAULT NULL
 );

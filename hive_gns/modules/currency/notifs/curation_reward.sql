@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_curation_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_curation_reward( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION gns.core_curation_reward( _trx_id BYTEA, _created TIM
             -- check if subscribed
             _sub := gns.check_user_filter(_curator, _module, _notif_code);
             IF _sub = true THEN
-                _reward := ((_body->'value'->>'reward')::json->>'amount')::float / 1000000;
+                _reward := ((_body->'value'->>'reward')::jsonb->>'amount')::float / 1000000;
                 _remark := FORMAT('You received a curation reward of %s VESTS', _reward);
                 _link := FORMAT('https://hive.blog/@%s/%s', _body->'value'->>'comment_author', _body->'value'->>'comment_permlink');
                 -- make notification entry

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _trx_id BYTEA, _created TIMESTAMP, _body JSON, _module VARCHAR, _notif_code VARCHAR(3) )
+CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _trx_id BYTEA, _created TIMESTAMP, _body JSONB, _module VARCHAR, _notif_code VARCHAR(3) )
     RETURNS void
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -16,9 +16,9 @@ CREATE OR REPLACE FUNCTION gns.core_fill_convert_request( _trx_id BYTEA, _create
             -- check if subscribed
             _sub := gns.check_user_filter(_account, _module, _notif_code);
             IF _sub = true THEN
-                _amount_in := ((_body->'value'->>'amount_in')::json->>'amount')::float / 1000;
-                _amount_out := ((_body->'value'->>'amount_out')::json->>'amount')::float / 1000;
-                IF (_body->'value'->>'amount_in')::json->>'nai' = '@@000000013' THEN
+                _amount_in := ((_body->'value'->>'amount_in')::jsonb->>'amount')::float / 1000;
+                _amount_out := ((_body->'value'->>'amount_out')::jsonb->>'amount')::float / 1000;
+                IF (_body->'value'->>'amount_in')::jsonb->>'nai' = '@@000000013' THEN
                     _remark := FORMAT('Successfully converted %s HIVE to %s HBD', _amount_in, _amount_out);
                 ELSE
                     _remark := FORMAT('Successfully converted %s HBD to %s HIVE', _amount_in, _amount_out);
