@@ -86,6 +86,21 @@ def _get_preferences(account, module=None):
         }
     return res
 
+def _get_enabled_pairs(acc):
+    """Get all enabled notif pairs for an account."""
+    sql = f"""
+        SELECT prefs->'enabled' AS enabled
+        FROM gns.accounts
+        WHERE account = '{acc}';
+    """.replace("gns.", f"{config['schema']}.")
+    res = db.select(sql, ['enabled'], True)
+    enabled = res['enabled']
+    pairs = []
+    for module in enabled:
+        for code in enabled[module]:
+            pairs.append(f"{module}:{code}")
+    return pairs
+
 @router_core_accounts.get("/api/{account}/preferences", tags=['accounts'])
 def account_preferences(account:str, module:str = None):
     if module and module not in GnsStatus.get_module_list():
@@ -96,6 +111,15 @@ def account_preferences(account:str, module:str = None):
         raise HTTPException(status_code=400, detail="invalid Hive account entered for 'account'")
     prefs = _get_preferences(account.replace('@', ''), module)
     return prefs or {}
+
+@router_core_accounts.get("/api/{account}/enabled-notifs", tags=['accounts'])
+def account_enabled_notifs(account:str):
+    if '@' not in account:
+        raise HTTPException(status_code=400, detail="missing '@' in account")
+    if not is_valid_hive_account(account.replace('@', '')):
+        raise HTTPException(status_code=400, detail="invalid Hive account entered for 'account'")
+    pairs = _get_enabled_pairs(account.replace('@', ''))
+    return pairs or []
 
 @router_core_accounts.get("/api/{account}/notifications", tags=['accounts'])
 async def account_notifications(account:str, module:str=None, notif_code:str=None, limit:int=MAX_LIMIT, op_data:bool=False):

@@ -32,13 +32,13 @@ def _get_transfers(acc, limit, token=None, sender=None, min_amount=None, max_amo
         )
     """.replace("gns.", f"{config['schema']}.")
     if token:
-        sql += f"AND payload->'value'->>'json')::json->>'token' = '{token}' "
+        sql += f"AND payload->'value'->>'json')::jsonb->>'token' = '{token}' "
     if sender:
-        sql += f"AND ARRAY(SELECT json_array_elements_text((_body->'value'->'required_auths')))[1] = '{sender}' "
+        sql += f"AND ARRAY(SELECT jsonb_array_elements_text((_body->'value'->'required_auths')))[1] = '{sender}' "
     if min_amount:
-        sql += f"AND payload->'value'->>'json')::json->>'qty' >= {min_amount} "
+        sql += f"AND payload->'value'->>'json')::jsonb->>'qty' >= {min_amount} "
     if max_amount:
-        sql += f"AND payload->'value'->>'json')::json->>'qty' <= {max_amount} "
+        sql += f"AND payload->'value'->>'json')::jsonb->>'qty' <= {max_amount} "
     if min_date:
         sql += f"AND created >= '{min_date}'"
     if max_date:

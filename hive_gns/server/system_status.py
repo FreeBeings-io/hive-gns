@@ -5,7 +5,8 @@ STATUS_MAPPING = (
     ('block_num', 'latest_block_num'),
     ('last_updated', 'check_in'),
     ('sync_enabled', 'sync_enabled'),
-    ('state_preloaded', 'state_preloaded')
+    ('state_preloaded', 'state_preloaded'),
+    ('state_preload_progress', 'state_preload_progress'),
 )
 
 
