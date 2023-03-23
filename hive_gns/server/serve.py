@@ -1,3 +1,4 @@
+import logging
 import uvicorn
 
 from datetime import datetime
@@ -47,6 +48,8 @@ async def root():
             'system': normalize_types(system_status.get_sys_status()),
             'timestamp': datetime.utcnow().strftime(UTC_TIMESTAMP_FORMAT)
         }
+        if report['system']['state_preloaded'] is True:
+            del report['system']['state_preload_progress']
         head = GnsStatus.get_haf_head()
         sys_head = report['system']['block_num'] or 0
 
@@ -60,7 +63,7 @@ async def root():
         report['health'] = health
         report['app_data'] = system_status.get_app_data()
     except Exception as err:
-        print(err)
+        logging.error(err)
         report = "System not ready."
     return report
 

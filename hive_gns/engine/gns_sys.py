@@ -1,14 +1,20 @@
 from hive_gns.config import Config
 from hive_gns.database.access import db
 
-GNS_OPS_FIELDS = ['gns_op_id', 'op_type_id', 'block_num', 'created', 'transaction_id', 'body']
+GNS_OPS_FIELDS = ["gns_op_id", "op_type_id", "block_num", "created", "transaction_id", "body"]
 GNS_GLOBAL_PROPS_FIELDS = [
-    'latest_block_num', 'check_in',
-    'sync_enabled', 'state_preloaded'
+    "latest_block_num", "check_in",
+    "sync_enabled", "state_preloaded",
+    "TO_CHAR(state_preload_progress, 'fm00D00%')"
+]
+GNS_GLOBAL_PROPS_FIELDS_SCHEMA = [
+    "latest_block_num", "check_in",
+    "sync_enabled", "state_preloaded",
+    "state_preload_progress"
 ]
 GNS_MODULE_STATE_FIELDS = [
-    'latest_gns_op_id', 'latest_block_num',
-    'check_in', 'enabled'
+    "latest_gns_op_id", "latest_block_num",
+    "check_in", "enabled"
 ]
 
 config = Config.config
@@ -50,7 +56,7 @@ class GnsStatus:
         sql = f"""
             SELECT {fields} FROM gns.global_props;
         """.replace("gns.", f"{config['schema']}.")
-        res = db.select(sql, GNS_GLOBAL_PROPS_FIELDS)
+        res = db.select(sql, GNS_GLOBAL_PROPS_FIELDS_SCHEMA)
         return res[0]
 
 
