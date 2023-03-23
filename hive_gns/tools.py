@@ -3,7 +3,11 @@ import decimal
 import os
 import re
 
-GLOBAL_START_BLOCK = 64251317
+from hive_gns.config import Config
+
+config = Config.config
+
+GLOBAL_START_BLOCK = 73077699
 INSTALL_DIR = os.path.dirname(__file__)
 UTC_TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S"
 MAX_LIMIT = 50
@@ -62,3 +66,7 @@ def range_split(first, last, size):
 
 def is_valid_hive_account(acc):
     return bool(re.match(r'^[a-z][a-z0-9-.]{3,16}$', acc))
+
+def schemafy(data:str):
+    _data = data.replace('gns.', f"{config['schema']}.")
+    return _data
