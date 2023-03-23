@@ -6,7 +6,7 @@ from hive_gns.config import Config
 from hive_gns.database.core import DbSession
 from hive_gns.database.modules import AvailableModules, Module
 
-from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR
+from hive_gns.tools import GLOBAL_START_BLOCK, INSTALL_DIR, schemafy
 
 START_DAYS_DISTANCE = 1
 SOURCE_DIR = os.path.dirname(__file__) + "/sql"
@@ -23,6 +23,12 @@ class Haf:
         sql = "SELECT hive.app_get_irreversible_block();"
         res = db.do('select', sql)
         return res[0]
+
+    @classmethod
+    def get_gns_start_block(cls, db):
+        sql = schemafy("SELECT gns.get_start_block();")
+        res = db.do('select', sql)
+        return res[0][0]
 
     @classmethod
     def _is_valid_module(cls, module):
@@ -111,9 +117,14 @@ class Haf:
             db.do('commit')
     
     @classmethod
-    def _init_main_sync(cls, db):
+    def _init_main_sync(cls, db, start_block):
         print("Starting main sync process...")
-        db.do('execute', f"CALL {config['schema']}.sync_main();")
+        db.do('execute', f"CALL {config['schema']}.sync_main({start_block});")
+    
+    @classmethod
+    def _init_state_preload(cls, db, start_block):
+        print("Running state preload process...")
+        db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {start_block-1});")
     
     @classmethod
     def _cleanup(cls, db):
@@ -138,13 +149,7 @@ class Haf:
         cls._init_gns(db)
         cls._cleanup(db)
         cls._init_modules(db)
-        start = db.do('select', f"SELECT {config['schema']}.global_sync_enabled()")[0][0]
-        if start is True:
-            print("Running state_preload script...")
-            end_block = cls._get_haf_sync_head(db)[0] - 300
-            db.do('execute', f"CALL {config['schema']}.load_state({GLOBAL_START_BLOCK}, {end_block});")
-            db_main = DbSession('main')
-            Thread(target=cls._init_main_sync, args=(db_main,)).start()
-        else:
-            print("Global sync is disabled. Shutting down")
-            os._exit(0)
+        start_block = cls.get_gns_start_block(db)
+        Thread(target=cls._init_state_preload, args=(db,start_block)).start()
+        db_main = DbSession('main')
+        Thread(target=cls._init_main_sync, args=(db_main,start_block)).start()
