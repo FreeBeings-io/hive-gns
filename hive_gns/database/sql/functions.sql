@@ -63,7 +63,8 @@ CREATE OR REPLACE FUNCTION gns.global_sync_enabled()
         BEGIN
             _state_preloaded := (SELECT state_preloaded FROM gns.global_props LIMIT 1);
             _enabled := (SELECT sync_enabled FROM gns.global_props LIMIT 1);
-            IF _state_preloaded AND _enabled THEN
+            RAISE NOTICE 'state_preloaded: %   sync_enabled: %', _state_preloaded, _enabled;
+            IF _state_preloaded = true AND _enabled = true THEN
                 _good := true;
             ELSE
                 _good := false;

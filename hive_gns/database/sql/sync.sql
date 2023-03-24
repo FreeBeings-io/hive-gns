@@ -10,7 +10,6 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
             _enabled_modules VARCHAR[];
             _module_hooks JSONB[];
 
-            _global_start_block INTEGER;
             _head_haf_block_num INTEGER;
             _latest_block_num INTEGER;
             _first_block INTEGER;
@@ -47,49 +46,54 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
             END IF;
 
             -- begin main sync loop
-            WHILE gns.global_sync_enabled() LOOP
-                _target := hive.app_get_irreversible_block();
-                IF _target - _begin >= 0 THEN
-                    RAISE NOTICE 'New block range: <%,%>', _begin, _target;
-                    FOR _first_block IN _begin .. _target BY _step LOOP
-                        _last_block := _first_block + _step - 1;
+            WHILE true LOOP
+                IF gns.global_sync_enabled() = true THEN
+                    _target := hive.app_get_irreversible_block();
+                    IF _target - _begin >= 0 THEN
+                        RAISE NOTICE 'New block range: <%,%>', _begin, _target;
+                        FOR _first_block IN _begin .. _target BY _step LOOP
+                            _last_block := _first_block + _step - 1;
 
-                        IF _last_block > _target THEN --- in case the _step is larger than range length
-                            _last_block := _target;
-                        END IF;
+                            IF _last_block > _target THEN --- in case the _step is larger than range length
+                                _last_block := _target;
+                            END IF;
 
-                        RAISE NOTICE 'Attempting to process a block range: <%, %>', _first_block, _last_block;
-                        FOR temprow IN
-                            SELECT
-                                ov.id,
-                                ov.op_type_id,
-                                ov.block_num,
-                                ov.timestamp,
-                                ov.trx_in_block,
-                                tv.trx_hash,
-                                ov.body::varchar::jsonb
-                            FROM hive.operations_view ov
-                            LEFT JOIN hive.transactions_view tv
-                                ON tv.block_num = ov.block_num
-                                AND tv.trx_in_block = ov.trx_in_block
-                            WHERE ov.block_num >= _first_block
-                                AND ov.block_num <= _last_block
-                            ORDER BY ov.block_num, ov.id
-                        LOOP
-                            -- process operation
-                            PERFORM gns.process_operation(temprow, _module_hooks);
+                            RAISE NOTICE 'Attempting to process a block range: <%, %>', _first_block, _last_block;
+                            FOR temprow IN
+                                SELECT
+                                    ov.id,
+                                    ov.op_type_id,
+                                    ov.block_num,
+                                    ov.timestamp,
+                                    ov.trx_in_block,
+                                    tv.trx_hash,
+                                    ov.body::varchar::jsonb
+                                FROM hive.operations_view ov
+                                LEFT JOIN hive.transactions_view tv
+                                    ON tv.block_num = ov.block_num
+                                    AND tv.trx_in_block = ov.trx_in_block
+                                WHERE ov.block_num >= _first_block
+                                    AND ov.block_num <= _last_block
+                                ORDER BY ov.block_num, ov.id
+                            LOOP
+                                -- process operation
+                                PERFORM gns.process_operation(temprow, _module_hooks);
+                            END LOOP;
+                            RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
+                            -- prune old data
+                            PERFORM gns.prune_gns();
+                            -- update global props and save
+                            UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block;
+                            COMMIT;
                         END LOOP;
-                        RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
-                        -- prune old data
-                        PERFORM gns.prune_gns();
-                        -- update global props and save
-                        UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block;
-                        COMMIT;
-                    END LOOP;
-                    _begin := _target +1;
+                        _begin := _target +1;
+                    ELSE
+                        RAISE NOTICE 'begin: %   target: %', _begin, _target;
+                        PERFORM pg_sleep(1);
+                    END IF;
                 ELSE
-                    RAISE NOTICE 'begin: %   target: %', _begin, _target;
-                    PERFORM pg_sleep(1);
+                    RAISE NOTICE 'Global sync disabled, sleeping for 2 seconds...';
+                    PERFORM pg_sleep(2);
                 END IF;
             END LOOP;
         END;

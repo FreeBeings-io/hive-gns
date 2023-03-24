@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS gns.global_props(
     latest_block_num INTEGER,
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
-    state_preload_progress FLOAt DEFAULT 0,
+    state_preload_progress FLOAT DEFAULT 0,
     sync_enabled BOOLEAN DEFAULT false
 );
 

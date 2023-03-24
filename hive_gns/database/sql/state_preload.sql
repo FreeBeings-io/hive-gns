@@ -57,7 +57,6 @@ CREATE OR REPLACE PROCEDURE gns.load_state(_first_block INTEGER, _last_block INT
                         _hash := temprow.trx_hash;
                         _hive_op_type_id := temprow.op_type_id;
                         _body := (temprow.body)::jsonb;
-                        RAISE NOTICE '%s', _body;
                         PERFORM gns.core_gns(_hash, _block_timestamp, _body, _module, _notif_code);
                     END LOOP;
                     _last_processed_block := _target + 1;
