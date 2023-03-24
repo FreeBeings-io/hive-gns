@@ -2,7 +2,7 @@ import logging
 import uvicorn
 
 from datetime import datetime
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 
 from hive_gns.config import Config
@@ -52,20 +52,31 @@ async def root():
             del report['system']['state_preload_progress']
         head = GnsStatus.get_haf_head()
         sys_head = report['system']['block_num'] or 0
-
-        diff = head - sys_head
-        health = "GOOD"
-        if sys_head == 0:
-            health = "BAD - System not ready"
-        else:
-            if diff > 30:
-                health = f"BAD - {diff} blocks behind... "
-        report['health'] = health
         report['app_data'] = system_status.get_app_data()
+        # check health
+        if report['system']['state_preloaded'] is False:
+            report['health'] = "BAD - State not preloaded."
+            return report
+        if sys_head == 0:
+            report['health'] = "BAD - System not ready."
+            return report
+        block_time = report['system']['block_time']
+        now = datetime.utcnow()
+        diff = now - block_time
+        if diff.total_seconds() < 60:
+            report['health'] = f"BAD - {diff.total_seconds()} seconds behind... {head-sys_head} blocks behind"
+            return report
+        else:
+            diff = head - sys_head
+            if diff > 30:
+                report['health'] = f"BAD - {diff} blocks behind... "
+                return report
+        report['health'] = "GOOD"
+        return report
     except Exception as err:
         logging.error(err)
         report = "System not ready."
-    return report
+        return report
 
 def run_server():
     """Run server."""

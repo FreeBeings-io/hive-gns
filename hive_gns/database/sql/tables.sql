@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS gns.global_props(
     latest_block_num INTEGER,
+    latest_block_time TIMESTAMP,
     check_in TIMESTAMP,
     state_preloaded BOOLEAN DEFAULT false,
     state_preload_progress FLOAT DEFAULT 0,

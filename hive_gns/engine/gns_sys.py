@@ -3,12 +3,12 @@ from hive_gns.database.access import db
 
 GNS_OPS_FIELDS = ["gns_op_id", "op_type_id", "block_num", "created", "transaction_id", "body"]
 GNS_GLOBAL_PROPS_FIELDS = [
-    "latest_block_num", "check_in",
+    "latest_block_num", "latest_block_time", "check_in",
     "sync_enabled", "state_preloaded",
     "TO_CHAR(state_preload_progress, 'fm00D00%')"
 ]
 GNS_GLOBAL_PROPS_FIELDS_SCHEMA = [
-    "latest_block_num", "check_in",
+    "latest_block_num", "latest_block_time", "check_in",
     "sync_enabled", "state_preloaded",
     "state_preload_progress"
 ]

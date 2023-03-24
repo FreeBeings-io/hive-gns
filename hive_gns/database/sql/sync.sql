@@ -10,6 +10,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
             _enabled_modules VARCHAR[];
             _module_hooks JSONB[];
 
+            _last_block_timestamp TIMESTAMP;
             _head_haf_block_num INTEGER;
             _latest_block_num INTEGER;
             _first_block INTEGER;
@@ -78,12 +79,13 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
                             LOOP
                                 -- process operation
                                 PERFORM gns.process_operation(temprow, _module_hooks);
+                                _last_block_timestamp := temprow.timestamp;
                             END LOOP;
                             RAISE NOTICE 'Block range: <%, %> processed successfully.', _first_block, _last_block;
                             -- prune old data
                             PERFORM gns.prune_gns();
                             -- update global props and save
-                            UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block;
+                            UPDATE gns.global_props SET check_in = NOW(), latest_block_num = _last_block, latest_block_time = _last_block_timestamp;
                             COMMIT;
                         END LOOP;
                         _begin := _target +1;
@@ -92,7 +94,6 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
                         PERFORM pg_sleep(1);
                     END IF;
                 ELSE
-                    RAISE NOTICE 'Global sync disabled, sleeping for 2 seconds...';
                     PERFORM pg_sleep(2);
                 END IF;
             END LOOP;
