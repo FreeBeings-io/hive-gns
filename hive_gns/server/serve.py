@@ -60,17 +60,18 @@ async def root():
         if sys_head == 0:
             report['health'] = "BAD - System not ready."
             return report
+        
+        diff = head - sys_head
+        if diff > 30:
+            report['health'] = f"BAD - {diff} blocks behind... "
+            return report
+        
         block_time = report['system']['block_time']
         now = datetime.utcnow()
-        diff = now - block_time
-        if diff.total_seconds() < 60:
-            report['health'] = f"BAD - {diff.total_seconds()} seconds behind... {head-sys_head} blocks behind"
+        diff = now - datetime.strptime(block_time, UTC_TIMESTAMP_FORMAT)
+        if diff.total_seconds() > 60:
+            report['health'] = f"BAD - {diff.total_seconds()} seconds behind..."
             return report
-        else:
-            diff = head - sys_head
-            if diff > 30:
-                report['health'] = f"BAD - {diff} blocks behind... "
-                return report
         report['health'] = "GOOD"
         return report
     except Exception as err:
