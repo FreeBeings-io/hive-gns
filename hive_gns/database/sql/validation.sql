@@ -11,14 +11,14 @@ CREATE OR REPLACE FUNCTION gns.validate_gns_payload( _payload JSONB )
                 RETURN false;
             END IF;
             -- main payload must be in array
-            IF NOT jsonb_path_exists(_payload, '$[*]') THEN
+            IF NOT jsonb_path_exists(_payload, '$[*]'::jsonpath) THEN
                 -- RAISE NOTICE 'main payload is not array';
                 RETURN false;
             END IF;
 
             -- check if op_header is correct
             --_op_header := jsonb_path_query(_payload, '$[0]');
-            IF jsonb_path_exists(_payload, '$[0][*]') = false THEN
+            IF jsonb_path_exists(_payload, '$[0][*]'::jsonpath) = false THEN
                 -- RAISE NOTICE 'op_header is not array';
                 RETURN false;
             END IF;
@@ -135,11 +135,11 @@ CREATE OR REPLACE FUNCTION gns.validate_notif_prefs(_module VARCHAR, _notif_code
 
             -- for each key in _payload check if it is in _prefs_validation
             FOR _key IN SELECT jsonb_object_keys(_payload) LOOP
-                IF NOT jsonb_path_exists(_prefs_validation, '$.' || _key) THEN
+                IF NOT jsonb_path_exists(_prefs_validation, ('$.' || _key)::jsonpath) THEN
                     RAISE NOTICE 'key % is not in prefs_validation', _key;
                     RETURN false;
                 ELSE
-                    _path := '$.' || _key || '?(@.type() == "' || _prefs_validation->>_key::jsonpath || '"';
+                    _path := '$.' || _key || ('?(@.type() == "' || _prefs_validation->>_key || '"')::jsonpath;
                     IF jsonb_path_exists(_payload, _path) = false THEN
                         RAISE NOTICE 'path % does not exist', _path;
                         RETURN false;
