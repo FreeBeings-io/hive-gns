@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS gns.accounts(
     last_reads JSONB DEFAULT FORMAT('{"all": "%s"}', timezone('UTC', now()) - '30 days'::interval)::jsonb,
     prefs JSONB DEFAULT '{}'::jsonb,
     options JSONB DEFAULT '{}'::jsonb,
-    prefs_updated TIMESTAMP
+    prefs_updated TIMESTAMP,
     options_updated TIMESTAMP
 );
 
