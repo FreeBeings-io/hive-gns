@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
     funct VARCHAR(128) NOT NULL,
     op_id SMALLINT NOT NULL,
     notif_filter VARCHAR(500) NOT NULL,
-    prefs JSONB NOT NULL
+    options JSONB NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS gns.accounts(

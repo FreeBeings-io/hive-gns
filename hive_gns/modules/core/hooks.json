@@ -7,6 +7,6 @@
         "function": "gns.core_gns",
         "notif_code": "gns",
         "filter": "",
-        "prefs": {}
+        "options": {}
     }
 }

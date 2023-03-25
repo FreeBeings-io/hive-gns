@@ -110,7 +110,7 @@ CREATE OR REPLACE FUNCTION gns.validate_prefs_options(_payload JSONB)
                         RAISE NOTICE 'module % notif_code % is not valid', _module, _notif_code;
                         RETURN false;
                     ELSE
-                        _valid_notif_pref := gns.validate_notif_prefs(_module, _notif_code, _payload);
+                        _valid_notif_pref := gns.validate_notif_options(_module, _notif_code, _payload);
                         IF _valid_notif_pref = false THEN
                             RETURN false;
                         END IF;
@@ -121,7 +121,7 @@ CREATE OR REPLACE FUNCTION gns.validate_prefs_options(_payload JSONB)
         END;
     $function$;
 
-CREATE OR REPLACE FUNCTION gns.validate_notif_prefs(_module VARCHAR, _notif_code VARCHAR, _payload JSONB)
+CREATE OR REPLACE FUNCTION gns.validate_notif_options(_module VARCHAR, _notif_code VARCHAR, _payload JSONB)
     RETURNS boolean
     LANGUAGE plpgsql
     VOLATILE AS $function$
@@ -129,18 +129,24 @@ CREATE OR REPLACE FUNCTION gns.validate_notif_prefs(_module VARCHAR, _notif_code
             _prefs_validation JSONB;
             _key VARCHAR;
             _path VARCHAR;
+            _working_payload JSONB;
         BEGIN
             -- load prefs from module_hooks for module into _prefs_validation
-            _prefs_validation := (SELECT prefs FROM gns.module_hooks WHERE module = _module AND notif_code = _notif_code);
-
+            _prefs_validation := (SELECT options FROM gns.module_hooks WHERE module = _module AND notif_code = _notif_code);
+            _working_payload := _payload->_module->_notif_code;
             -- for each key in _payload check if it is in _prefs_validation
-            FOR _key IN SELECT jsonb_object_keys(_payload) LOOP
-                IF NOT jsonb_path_exists(_prefs_validation, ('$.' || _key)::jsonpath) THEN
+            FOR _key IN SELECT jsonb_object_keys(_working_payload) LOOP
+                --_path := FORMAT('$.%s', _key)::jsonpath;
+                --_path := ('$.' || _key)::jsonpath;
+                _path := '$.' || _key;
+                RAISE NOTICE 'path %', _path;
+                IF NOT jsonb_path_exists(_prefs_validation, _path::jsonpath) THEN
                     RAISE NOTICE 'key % is not in prefs_validation', _key;
                     RETURN false;
                 ELSE
-                    _path := '$.' || _key || ('?(@.type() == "' || _prefs_validation->>_key || '"')::jsonpath;
-                    IF jsonb_path_exists(_payload, _path) = false THEN
+                    _path := '$.' || _key || '?(@.type() == ' || (_prefs_validation->_key) || ')';
+                    RAISE NOTICE 'path %', _path;
+                    IF jsonb_path_exists(_working_payload, _path::jsonpath) = false THEN
                         RAISE NOTICE 'path % does not exist', _path;
                         RETURN false;
                     END IF;

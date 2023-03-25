@@ -65,7 +65,7 @@ class Haf:
             _op_id = int(hooks[notif_name]['op_id'])
             _description = hooks[notif_name]['description']
             _filter = hooks[notif_name]['filter']
-            _prefs = json.dumps(hooks[notif_name]['prefs'])
+            _options = json.dumps(hooks[notif_name]['options'])
             has_hooks_entry = db.do('select_exists',
                 f"""
                     SELECT module FROM {config['schema']}.module_hooks 
@@ -75,8 +75,8 @@ class Haf:
             if has_hooks_entry is False:
                 db.do('execute',
                     f"""
-                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter, description, prefs)
-                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}', '{_description}', '{_prefs}');
+                        INSERT INTO {config['schema']}.module_hooks (module, notif_name, notif_code, funct, op_id, notif_filter, description, options)
+                        VALUES ('{module}', '{notif_name}', '{_notif_code}', '{_funct}', '{_op_id}', '{_filter}', '{_description}', '{_options}');
                     """
                 )
             else:
@@ -84,7 +84,7 @@ class Haf:
                     f"""
                         UPDATE {config['schema']}.module_hooks 
                         SET notif_code = '{_notif_code}',
-                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}', description = '{_description}', prefs = '{_prefs}';
+                            funct = '{_funct}', op_id = {_op_id}, notif_filter= '{_filter}', description = '{_description}', options = '{_options}';
                     """
                 )
 
@@ -104,6 +104,7 @@ class Haf:
 
     @classmethod
     def _init_gns(cls, db):
+        print("Initializing GNS...")
         db.do('execute', f"CREATE SCHEMA IF NOT EXISTS {config['schema']};")
         for _file in ['tables.sql', 'functions.sql', 'sync.sql', 'state_preload.sql', 'filters.sql', 'validation.sql']:
             _sql = (open(f'{SOURCE_DIR}/{_file}', 'r', encoding='UTF-8').read()
@@ -129,6 +130,7 @@ class Haf:
     @classmethod
     def _cleanup(cls, db):
         """Stops any running sync procedures from previous instances."""
+        print("Cleaning up...")
         running = db.do('select_one', f"SELECT {config['schema']}.is_sync_running('{config['schema']}-main');")
         if running is True:
             db.do('execute', f"SELECT {config['schema']}.terminate_main_sync('{config['schema']}-main');")

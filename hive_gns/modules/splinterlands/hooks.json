@@ -7,6 +7,6 @@
         "function": "gns.sm_token_transfer",
         "notif_code": "trn",
         "filter": "",
-        "prefs": {}
+        "options": {}
     }
 }

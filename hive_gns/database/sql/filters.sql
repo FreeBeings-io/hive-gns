@@ -39,7 +39,7 @@ CREATE OR REPLACE FUNCTION gns.check_user_filter(_acc VARCHAR(16), _module VARCH
     $function$;
 
 -- get account options
-CREATE OR REPLACE FUNCTION gns.get_account_options(_acc VARCHAR(16), _module VARCHAR(64), _notif_code VARCHAR(3)
+CREATE OR REPLACE FUNCTION gns.get_account_options(_acc VARCHAR(16), _module VARCHAR(64), _notif_code VARCHAR(3))
     RETURNS JSONB
     LANGUAGE plpgsql
     VOLATILE AS $function$

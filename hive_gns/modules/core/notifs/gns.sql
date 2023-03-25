@@ -56,9 +56,9 @@ CREATE OR REPLACE FUNCTION gns.core_gns( _trx_id BYTEA, _created TIMESTAMP, _bod
                         -- check acount
                         PERFORM gns.check_account(_acc);
                         -- validate notifs payload
-                        RAISE NOTICE 'validating notifs payload';
+                        RAISE NOTICE 'validating options payload';
                         IF gns.validate_prefs_options(_data) = false THEN
-                            RAISE NOTICE 'notifs payload is invalid';
+                            RAISE NOTICE 'options payload is invalid';
                             RETURN;
                         END IF;
                         -- update account's notifs and set notifs_updated
