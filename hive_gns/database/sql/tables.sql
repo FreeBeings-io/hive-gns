@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS gns.module_hooks(
 CREATE TABLE IF NOT EXISTS gns.accounts(
     account VARCHAR(16) PRIMARY KEY,
     last_reads JSONB DEFAULT FORMAT('{"all": "%s"}', timezone('UTC', now()) - '30 days'::interval)::jsonb,
-    prefs JSONB DEFAULT '{}'::jsonb,
+    prefs JSONB DEFAULT '{"social":["vot","men"],"currency":["trn"]}'::jsonb,
     options JSONB DEFAULT '{}'::jsonb,
     prefs_updated TIMESTAMP,
     options_updated TIMESTAMP

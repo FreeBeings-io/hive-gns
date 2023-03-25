@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP,
             _read TIMESTAMP;
             _read_json JSONB;
             _sub BOOLEAN;
+            _options JSONB;
             _link VARCHAR(500);
         BEGIN
             -- transfer_operation
@@ -46,6 +47,19 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP,
             _sub := gns.check_user_filter(_to, _module, _notif_code);
 
             IF _sub = true THEN
+
+                -- check for options
+                _options := gns.get_account_options(_to, _module, _notif_code);
+                IF _options IS NOT NULL THEN
+                    -- check min_hbd
+                    IF _currency = 'HBD' AND _amount < _options->>'min_hbd'::float THEN
+                        RETURN;
+                    END IF;
+                    -- check min_hive
+                    IF _currency = 'HIVE' AND _amount < _options->>'min_hive'::float THEN
+                        RETURN;
+                    END IF;
+                END IF;
 
                 _remark := FORMAT('you have received %s %s from %s', _amount, _currency, _from);
                 _link := FORMAT('https://hive.blog/@%s', _from);
