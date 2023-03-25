@@ -37,6 +37,12 @@ class Fields:
             """Fields for the `_get_preferences()` core endpoint function."""
             res = ['prefs', 'prefs_updated']
             return res
+        
+        @classmethod
+        def get_options(cls):
+            """Fields for the `_get_options()` core endpoint function."""
+            res = ['options', 'options_updated']
+            return res
     
     class Splinterlands:
         """Splinterlands module's SQL fields."""

@@ -37,15 +37,3 @@ CREATE OR REPLACE FUNCTION gns.check_user_filter(_acc VARCHAR(16), _module VARCH
             RETURN false;
         END;
     $function$;
-
-
--- OP FILTERS
-
-CREATE OR REPLACE FUNCTION gns.filter_custom_json_operation(_filter JSONB)
-    RETURNS BOOLEAN
-    LANGUAGE plpgsql
-    VOLATILE AS $function$
-        BEGIN
-            RETURN true;
-        END;
-    $function$;

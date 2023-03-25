@@ -86,6 +86,21 @@ def _get_preferences(account, module=None):
         }
     return res
 
+def _get_options(account, module=None):
+    fields = Fields.Core.get_options()
+    _fields = ", ".join(fields)
+    sql = f"""
+        SELECT {_fields} FROM gns.accounts
+        WHERE account = '{account}';
+    """.replace("gns.", f"{config['schema']}.")
+    res = db.select(sql, fields, True)
+    if module and module in res['prefs']:
+        return {
+            'prefs': res['options'][module],
+            'prefs_updated': res['options_updated']
+        }
+    return res
+
 def _get_enabled_pairs(acc):
     """Get all enabled notif pairs for an account."""
     sql = f"""

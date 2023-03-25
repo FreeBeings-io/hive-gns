@@ -62,7 +62,7 @@ CREATE OR REPLACE FUNCTION gns.core_gns( _trx_id BYTEA, _created TIMESTAMP, _bod
                             RETURN;
                         END IF;
                         -- update account's notifs and set notifs_updated
-                        UPDATE gns.accounts SET notifs = _data, notifs_updated = _created WHERE account = _acc;
+                        UPDATE gns.accounts SET options = _data, options_updated = _created WHERE account = _acc;
                     END IF;
                 END IF;
             END IF;
