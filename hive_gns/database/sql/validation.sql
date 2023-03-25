@@ -131,7 +131,7 @@ CREATE OR REPLACE FUNCTION gns.validate_notif_prefs(_module VARCHAR, _notif_code
             _path VARCHAR;
         BEGIN
             -- load prefs from module_hooks for module into _prefs_validation
-            _prefs_validation := (SELECT prefs FROM gns.module_hooks WHERE module = _module);
+            _prefs_validation := (SELECT prefs FROM gns.module_hooks WHERE module = _module AND notif_code = _notif_code);
 
             -- for each key in _payload check if it is in _prefs_validation
             FOR _key IN SELECT jsonb_object_keys(_payload) LOOP

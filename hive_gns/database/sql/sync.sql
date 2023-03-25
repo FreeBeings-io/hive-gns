@@ -20,7 +20,7 @@ CREATE OR REPLACE PROCEDURE gns.sync_main(_global_start_block INTEGER)
             _begin INTEGER;
             _target INTEGER;
         BEGIN
-            _step := 200;
+            _step := 1000;
             RAISE NOTICE 'Global start block: %s', _global_start_block;
             SELECT latest_block_num INTO _latest_block_num FROM gns.global_props;
             
