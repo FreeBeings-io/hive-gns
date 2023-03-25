@@ -127,6 +127,17 @@ def account_preferences(account:str, module:str = None):
     prefs = _get_preferences(account.replace('@', ''), module)
     return prefs or {}
 
+@router_core_accounts.get("/api/{account}/options", tags=['accounts'])
+def account_options(account:str, module:str = None):
+    if module and module not in GnsStatus.get_module_list():
+        raise HTTPException(status_code=400, detail="the module is not valid or is unavailable at the moment")
+    if '@' not in account:
+        raise HTTPException(status_code=400, detail="missing '@' in account")
+    if not is_valid_hive_account(account.replace('@', '')):
+        raise HTTPException(status_code=400, detail="invalid Hive account entered for 'account'")
+    prefs = _get_options(account.replace('@', ''), module)
+    return prefs or {}
+
 @router_core_accounts.get("/api/{account}/enabled-notifs", tags=['accounts'])
 def account_enabled_notifs(account:str):
     if '@' not in account:
