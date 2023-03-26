@@ -52,11 +52,11 @@ CREATE OR REPLACE FUNCTION gns.core_transfer( _trx_id BYTEA, _created TIMESTAMP,
                 _options := gns.get_account_options(_to, _module, _notif_code);
                 IF _options IS NOT NULL THEN
                     -- check min_hbd
-                    IF _currency = 'HBD' AND _amount < _options->>'min_hbd'::float THEN
+                    IF _currency = 'HBD' AND _amount < (_options->>'min_hbd')::float THEN
                         RETURN;
                     END IF;
                     -- check min_hive
-                    IF _currency = 'HIVE' AND _amount < _options->>'min_hive'::float THEN
+                    IF _currency = 'HIVE' AND _amount < (_options->>'min_hive')::float THEN
                         RETURN;
                     END IF;
                 END IF;
