@@ -136,8 +136,6 @@ CREATE OR REPLACE FUNCTION gns.validate_notif_options(_module VARCHAR, _notif_co
             _working_payload := _payload->_module->_notif_code;
             -- for each key in _payload check if it is in _prefs_validation
             FOR _key IN SELECT jsonb_object_keys(_working_payload) LOOP
-                --_path := FORMAT('$.%s', _key)::jsonpath;
-                --_path := ('$.' || _key)::jsonpath;
                 _path := '$.' || _key;
                 RAISE NOTICE 'path %', _path;
                 IF NOT jsonb_path_exists(_prefs_validation, _path::jsonpath) THEN

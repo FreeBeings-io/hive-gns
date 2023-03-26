@@ -24,7 +24,7 @@ CREATE OR REPLACE FUNCTION gns.check_user_filter(_acc VARCHAR(16), _module VARCH
             IF _prefs IS NULL THEN
                 RETURN false;
             END IF;
-            _module_prefs := _prefs->'enabled'->_module;
+            _module_prefs := _prefs->_module;
             IF _module_prefs IS NULL THEN
                 RETURN false;
             END IF;
