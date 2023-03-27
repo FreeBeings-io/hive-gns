@@ -34,23 +34,3 @@ The entire payload is an array of three elements:
 - 3rd element: is the payload for the internal operation, as an object
 
 In the sections below, we will go through each module and notification type, and explain the available options. Note that the JSON samples provided are not the final payload, they still need to be embedded in a full CJOS data payload as in the example above.
-
-## Currency
-
-The `currency` module hosts currency-related notifications, such as transfers or delegations.
-
-### HIVE/HBD Transfers
-
-The notification code for these notifications is `trn`.
-
-- `min_hive`: minimum amount of HIVE to trigger a notification
-- `min_hbd`: minimum amount of HBD to trigger a notification
-
-**Example:**
-
-```
-"trn": {
-    "min_hbd": 1,
-    "min_hive": 0.01
-}
-```
