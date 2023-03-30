@@ -47,7 +47,7 @@ CREATE OR REPLACE FUNCTION gns.core_gns( _trx_id BYTEA, _created TIMESTAMP, _bod
                         END IF;
                         
                         -- update account's prefs and set prefs_updated
-                        UPDATE gns.accounts SET prefs = _final_data, prefs_updated = _created WHERE account = _acc;
+                        UPDATE gns.accounts SET prefs = prefs || _final_data, prefs_updated = _created WHERE account = _acc;
                     END IF;
                 
                 -- if op_name = 'notifs', then check and validate then process
