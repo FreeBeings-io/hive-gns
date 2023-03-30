@@ -27,6 +27,18 @@ GNS allows granular control over notifications. You can enable/disable notificat
     }
 ]
 ```
+---
+
+## Mark as read
+
+Mark HIVE/HBD transfer notifications as read.
+
+```
+[
+    "read",
+    ["currency.trn"]
+]
+```
 
 ---
 
@@ -44,10 +56,8 @@ Enable all notifications in the `currency` and `social` modules:
 [
     "enabled",
     {
-        "enabled": {
-            "currency": ["*"],
-            "social": ["*"]
-        }
+        "currency": ["*"],
+        "social": ["*"]
     }
 ]
 ```
@@ -58,9 +68,7 @@ Enable the `vot` and `men` notifications in the `social` module:
 [
     "enabled",
     {
-        "enabled": {
-            "social": ["vot", "men"]
-        }
+        "social": ["vot", "men"]
     }
 ]
 ```
@@ -71,10 +79,8 @@ Enable all notifications in the `social` and `splinterlands` modules:
 [
     "enabled",
     {
-        "enabled": {
-            "social": ["*"],
-            "splinterlands": ["*"]
-        }
+        "social": ["*"],
+        "splinterlands": ["*"]
     }
 ]
 ```
@@ -85,9 +91,7 @@ Disable all notifications in the `currency` module:
 [
     "enabled",
     {
-        "enabled": {
-            "currency": []
-        }
+        "currency": []
     }
 ]
 ```

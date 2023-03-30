@@ -37,7 +37,9 @@ To reset the database, set the `RESET` variable to true.
 
 ## Documentation
 
-- [GNS Broadcast Ops](/docs/broadcast_ops.md)
+- [User Preferences](/docs/preferences/user_preferences.md)
+  - [GNS Notifications Options](/docs/preferences/notification_options.md)
+  - [Currency Options](/docs/preferences/currency_options.md)
 - [Integrating New Notifications](/docs/integration.md)
 - [HAF Internal Op IDs](/docs/haf_op_ids.md)
 
