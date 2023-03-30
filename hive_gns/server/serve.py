@@ -79,6 +79,19 @@ async def root():
         report = "System not ready."
         return report
 
+@app.get('/options', tags=['system'])
+async def get_notif_options(module: str, notif_code: str):
+    """Get notification options for a given module and notification code."""
+    try:
+        options = GnsStatus.get_notif_options(module, notif_code)
+        if options is None:
+            result = f"No options found for {module}:{notif_code}. Make sure the module and notification code are correct."
+            return Response(status_code=404, content=result)
+        return options
+    except Exception as err:
+        logging.error(err)
+        return Response(status_code=500)
+
 def run_server():
     """Run server."""
     uvicorn.run(

@@ -91,3 +91,15 @@ class GnsStatus:
     def get_module_latest_gns_op_id(cls, module):
         state = cls.get_module_latest_state(module)
         return state['latest_gns_op_id']
+
+    @classmethod
+    def get_notif_options(cls, module, notif_code):
+        sql = f"""
+            SELECT options
+            FROM gns.module_hooks
+            WHERE module ='{module}' AND notif_code = '{notif_code}';
+        """.replace("gns.", f"{config['schema']}.")
+        res = db.select(sql, ['options'])
+        if res is None:
+            return None
+        return res[0]['options']
